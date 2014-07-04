@@ -8,36 +8,41 @@
         var SCOPES = 'https://www.googleapis.com/auth/drive';
 
         var g_Data = [];
-  
+        var g_CurRootFolder;
+    
+        // js init
+        $(function() {
+            // js tree
+            $('#jstree').jstree({
+                 "plugins": ["themes", "json_data"], 
+             
+                'core': {
+                    'data': function(obj, callback) {
+                        callback.call(this, getFoldersByRootArray(g_CurRootFolder));
+                     }   
+                },
+                'types' : {
+                    'default': {'icon': 'folder'},
+                    'file': {'valid_children': [], 'icon': 'file'}
+                },
+
+            }).on("changed.jstree", function (e, data) {
+                console.log(data.selected);
+            });
+
+            // root folder select
+            $("#pageSelect").on('change', function (e) {
+                g_CurRootFolder = this.value;
+            });
+        });
+
         /**
          * Called when the client library is loaded to start the auth flow.
          */
         function handleClientLoad() {
             window.setTimeout(checkAuth, 1);
-            $('#jstree').jstree({
-            	 "plugins" : [ "themes", "json_data" ], 
-             
-                'core' : {
-            		'data' : g_Data
-            	},
-            	'types' : {
-            		'default' : { 'icon' : 'folder' },
-            		'file' : { 'valid_children' : [], 'icon' : 'file' }
-            	},
-
-            });
-
-    		// 7 bind to events triggered on the tree
-    		$('#jstree').on("changed.jstree", function (e, data) {
-                console.log(data.selected);
-    		});
         }
 
-        function refreshTree() {
-            $('#jstree').jstree(true).settings.core.data = g_Data;
-            $('#jstree').jstree(true).refresh();
-        }
-	  
         /**
          * Check if the current user has authorized the application.
          */
@@ -46,7 +51,7 @@
                 {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true}, handleAuthResult
             );
         }
-
+	  
         /**
          * Called when authorization server replies.
          *
@@ -68,48 +73,81 @@
             }
         }
 
+        /**
+         * [authSuccess description]
+         * @return {[type]}
+         */
         function authSuccess() {
             // Access token has been successfully retrieved, requests can be sent to the API.
             gapi.client.load('drive', 'v2', function() {
-                retrieveAllFiles(function(result) {
-				    result.forEach(function(item) {
-					   $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
-				    });
-                }, "'root' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
+                getRootFolders(function(item) {
+				    $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
+                    refreshTree();
+                });
             });
-		
-
-    		$("#pageSelect").on('change', function (e) {
-    			var valueSelected = this.value;
-    			
-    			g_Data = [];
-    			retrieveAllFiles(function(result) {
-    				result.forEach(function(item) {
-    					//g_Data
-    				});
-    			}, "'" + valueSelected + "' in parents and trashed = false");
-
-    		});
         }
-	 	 
+
         /**
-         * Start the file upload.
-         *
-         * @param {Object} evt Arguments from the file selector.
+         * [refreshTree description]
+         * @return {[type]} [description]
          */
-        function uploadFile(evt) {
-            gapi.client.load('drive', 'v2', function() {
-                var file = evt.target.files[0];
-                insertFile(file);
-            });
+        function refreshTree() {
+            $('#jstree').jstree(true).refresh();
         }
+
+        /**
+         * [getFoldersByRootArray description]
+         * @param  {[type]} id [description]
+         * @return {Array}    [description]
+         */
+        function getFoldersByRootArray(id) {
+            // TODO
+            var items = [];
+            retrieveAllFiles(function(item) {
+                var parent = item.parents == g_CurRootFolder ? '#' : item.parents
+
+                items.push({
+                    'id': item.id,
+                    'parent': parent,
+                    'text': item.title
+                });
+            }, "'" + g_CurRootFolder + "' in parents and
+                    trashed = false and
+                    mimeType = 'application/vnd.google-apps.folder'");
+            return items;
+        }
+
+
+        /**
+         * [getRootFolders description]
+         * @return {[type]} [description]
+         */
+        function getRootFolders(callback) {
+            retrieveAllFiles(callback, "'root' in parents and
+                                        trashed = false and
+                                        mimeType = 'application/vnd.google-apps.folder'");
+        }
+
+        /**
+         * [retrieveAllFiles description]
+         * @param  {Function} callback function(item), item is drive item
+         * @param  {[type]}   params   [description]
+         * @return {[type]}            [description]
+         */
+        function retrieveAllFiles(callback, params) {
+            retrieveAllFiles(function(result) {
+                result.forEach(function(item) {
+                    callback(item);
+                }
+            }           
+        }    
 
 		/**
 		 * Retrieve a list of File resources.
-		 *
+         * Use retrieveAllFiles instead this function.
 		 * @param {Function} callback Function to call when the request is complete.
 		 */
-		function retrieveAllFiles(callback, params) {
+		function retrieveAllFilesByPage(callback, params) {
             var retrievePageOfFiles = function(request, result) {
     			request.execute(function(resp) {
                     result = result.concat(resp.items);
@@ -119,65 +157,16 @@
                             'pageToken': nextPageToken,
                             'q': params
                         });
-    				    retrievePageOfFiles(request, result);
+    				    retrievePageOfFiles(request, result);  // page recursive
                      } else {
                         callback(result);
                     }
                 });
             }
-            var initialRequest = gapi.client.drive.files.list({'q': params});
+            var initialRequest = gapi.client.drive.files.list({'q': params});  // request with filter('q')
             retrievePageOfFiles(initialRequest, []);
         }
 	  
-        /**
-         * Insert new file.
-         *
-         * @param {File} fileData File object to read data from.
-         * @param {Function} callback Function to call when the request is complete.
-        */
-        function insertFile(fileData, callback) {
-            const boundary = '-------314159265358979323846';
-            const delimiter = "\r\n--" + boundary + "\r\n";
-            const close_delim = "\r\n--" + boundary + "--";
-
-            var reader = new FileReader();
-            reader.readAsBinaryString(fileData);
-            reader.onload = function(e) {
-                var contentType = fileData.type || 'application/octet-stream';
-                var metadata = {
-                    'title': fileData.name,
-                    'mimeType': contentType
-                };
-
-                var base64Data = btoa(reader.result);
-                var multipartRequestBody =
-                    delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    JSON.stringify(metadata) +
-                    delimiter +
-                    'Content-Type: ' + contentType + '\r\n' +
-                    'Content-Transfer-Encoding: base64\r\n' +
-                    '\r\n' +
-                    base64Data +
-                    close_delim;
-
-                var request = gapi.client.request({
-                    'path': '/upload/drive/v2/files',
-                    'method': 'POST',
-                    'params': {'uploadType': 'multipart'},
-                    'headers': {
-                        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
-                    },
-                    'body': multipartRequestBody});
-                
-                if (!callback) {
-                    callback = function(file) {
-                        console.log(file)
-                    };
-                }
-                request.execute(callback);
-            }
-        }
     </script>
     <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 	
@@ -186,7 +175,7 @@
 <body>
 <input type="button" id="authorizeButton" style="display: none" value="Authorize" />
 <select id="pageSelect">
-    <option value="">請選擇...</option>
+    <option value="">choose root folder...</option>
 </select>
 	
 <div id="jstree">
