@@ -10,7 +10,8 @@
     var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
     var SCOPES = 'https://www.googleapis.com/auth/drive';
 
-    var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    // var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
 
 
     // js init
@@ -20,10 +21,11 @@
              "plugins": ["themes", "json_data"], 
          
             'core': {
-                'data': function(obj, callback) {
-                    // var items = getFoldersByRoot();
-                    // callback.call(this, items);
-                 }   
+                data : {}
+                // 'data': function(obj, callback) {
+                //     // var items = getFoldersByRoot();
+                //     // callback.call(this, items);
+                //  }   
             },
             'types' : {
                 'default': {'icon': 'folder'},
@@ -36,7 +38,24 @@
 
         // root folder select
         $("#pageSelect").on('change', function (e) {
-            refreshTree();
+            // XXX
+            // refreshTree();
+            // $('#jstree').jstree(true).destroy();
+
+            var rootId = this.value;
+            // XXX
+            // googleDrive.getFoldersByRoot(rootId, function(item) {
+            //     var parentId = item.parents[0].id == rootId ? '#' : item.parents[0].id;
+                
+            //     appendNode(parentId,
+            //         {
+            //         'id': item.id,
+            //         'parent': parentId,
+            //         'text': item.title
+            //         }
+            //     );
+
+            // });
         });
     });
 
@@ -62,17 +81,34 @@
     function authSuccess() {
         // Access token has been successfully retrieved, requests can be sent to the API.
         googleDrive.getRootFolders(function(item) {
-            $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
-            refreshTree();
+            // $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));  XXX
         }); 
+
 
 //      XXX
         // // test button
         // $("#testBtn").click(function() {
-        //     console.log("test button click");
-        //     $('#jstree').jstree(true).destroy();
+        //     // $('#jstree').jstree(true).open_all();
+        //     // $('#jstree').jstree(true).destroy();
         // });
     }
+
+    // /**
+    //  * [appendNode description]
+    //  * @param  {String} null(or '#') if parentId if is root
+    //  * @param  {[type]} node     [description]
+    //  * @return {[type]}          [description]
+    //  */
+    // function appendNode(parentId, node) {
+    //     var parent;
+    //     if (parentId != null && parentId != '#') {
+    //         parent = $('#' + parentId);
+    //     } else {
+    //         parent = parentId;
+    //     }
+
+    //     $('#jstree').jstree(true).create_node(parent, node, "last", function() {}, true);
+    // }
 
     /**
      * [refreshTree description]
