@@ -42,6 +42,27 @@ GoogleDrive.prototype.getRootFolders = function(callback) {
 		"'root' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
 }
 
+// /**  XXX
+//  * [getFoldersByRoot description]
+//  * @param  {[type]}   id       [description]
+//  * @param  {Function} callback [description]
+//  * @return {[type]}            [description]
+//  */
+// GoogleDrive.prototype.getFoldersByRoot = function(id, callback) {
+// 	var _retrieveAllFiles = this.retrieveAllFiles;
+
+//     var _retrieveChildren = function(_id) {
+//         _retrieveAllFiles(function(item) {
+//         	if (item.mimeType == "application/vnd.google-apps.folder") {
+//         		callback(item);
+//                 _retrieveChildren(item.id)
+//             }
+//         }, "'" + _id + "' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
+//     }
+
+//     _retrieveChildren(id);
+// }
+
 /**
  * Retrieve a list of File resources(AJAX).
  * Use retrieveAllFiles instead this function.
@@ -71,51 +92,4 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
     }
     var initialRequest = gapi.client.drive.files.list({'q': params});  // request with filter('q')
     retrievePageOfFiles(initialRequest, []);
-}
-
-/**
- * [getFoldersByRootArray description]
- * @param  {[type]} id [description]
- * @return {Array}    [description]
- */
-function getFoldersByRoot(id) {
-    if (!id) {
-        return new Array();
-    }
-
-    // TODO
-    var items = new Array();
-
-    var _retrieveChildren = function(_id, _items) {
-        var callback = function(item) {
-            var parent = item.parents == id ? '#' : item.parents
-
-            // items[items.length] = {
-            //     'id': item.id,
-            //     'parent': parent,
-            //     'text': item.title
-            // };
-            _items.push({
-                'id': item.id,
-                'parent': parent,
-                'text': item.title
-            });
-
-            if (item.mimeType == "application/vnd.google-apps.folder") {
-                _retrieveChildren(item.id, _items)
-            }
-        };
-
-        retrieveAllFiles(callback, "'" + _id + "' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
-        // return items;
-        
-    }
-
-    // return _retrieveChildren;
-    _retrieveChildren(id, items);
-
-    return [{
-                'id': "qq",
-                'text': new Date()
-            }];
 }
