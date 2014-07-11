@@ -1,178 +1,95 @@
 <html>
-    <head>
-    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-    <script src="./jtree/jstree.min.js"></script>
-    <script type="text/javascript">
-        var CLIENT_ID = '460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com';
-        var SCOPES = 'https://www.googleapis.com/auth/drive';
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="./libs/jtree/jstree.min.js"></script>
+<script src="./libs/google-drive.js"></script>
 
-        var g_CurRootFolder;
-    
-        // js init
-        $(function() {
-            // js tree
-            $('#jstree').jstree({
-                 "plugins": ["themes", "json_data"], 
-             
-                'core': {
-                    'data': function(obj, callback) {
-                        callback.call(this, getFoldersByRootArray(g_CurRootFolder));
-                     }   
-                },
-                'types' : {
-                    'default': {'icon': 'folder'},
-                    'file': {'valid_children': [], 'icon': 'file'}
-                },
+<script type="text/javascript">
+    var CLIENT_ID = '460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com';
+    var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
+    var SCOPES = 'https://www.googleapis.com/auth/drive';
 
-            }).on("changed.jstree", function (e, data) {
-                console.log(data.selected);
-            });
+    var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
 
-            // root folder select
-            $("#pageSelect").on('change', function (e) {
-                g_CurRootFolder = this.value;
-            });
+
+    // js init
+    $(function() {
+        // js tree
+        $('#jstree').jstree({
+             "plugins": ["themes", "json_data"], 
+         
+            'core': {
+                'data': function(obj, callback) {
+                    // var items = getFoldersByRoot();
+                    // callback.call(this, items);
+                 }   
+            },
+            'types' : {
+                'default': {'icon': 'folder'},
+                'file': {'valid_children': [], 'icon': 'file'}
+            },
+
+        }).on("changed.jstree", function (e, data) {
+            // console.log(data.selected);
         });
 
-        /**
-         * Called when the client library is loaded to start the auth flow.
-         */
-        function handleClientLoad() {
-            window.setTimeout(checkAuth, 1);
-        }
+        // root folder select
+        $("#pageSelect").on('change', function (e) {
+            refreshTree();
+        });
+    });
 
-        /**
-         * Check if the current user has authorized the application.
-         */
-        function checkAuth() {
-            gapi.auth.authorize(
-                {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true}, handleAuthResult
-            );
-        }
-	  
-        /**
-         * Called when authorization server replies.
-         *
-         * @param {Object} authResult Authorization result.
-         */
-        function handleAuthResult(authResult) {
-            var authButton = document.getElementById('authorizeButton');
-            authButton.style.display = 'none';
+    
+
+    /**
+     * Called when the client library is loaded to start the auth flow.
+     */
+    function handleClientLoad() {
+        googleDrive.handleAuthResult = function(authResult) {
             if (authResult && !authResult.error) {
-                authSuccess();
+                gapi.client.load('drive', 'v2', authSuccess);
             } else {
-                // No access token could be retrieved, show the button to start the authorization flow.
-                authButton.style.display = 'block';
-                authButton.onclick = function() {
-                    gapi.auth.authorize(
-                        {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false}, handleAuthResult
-                    );
-                };
+                alert("auth fail");
             }
         }
+        googleDrive.auth();
+    }
 
-        /**
-         * [authSuccess description]
-         * @return {[type]}
-         */
-        function authSuccess() {
-            // Access token has been successfully retrieved, requests can be sent to the API.
-            gapi.client.load('drive', 'v2', function() {
-                getRootFolders(function(item) {
-				    $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
-                    refreshTree();
-                });
-            });
-        }
+    /**
+     * [authSuccess description]
+     * @return {[type]}
+     */
+    function authSuccess() {
+        // Access token has been successfully retrieved, requests can be sent to the API.
+        googleDrive.getRootFolders(function(item) {
+            $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
+            refreshTree();
+        }); 
 
-        /**
-         * [refreshTree description]
-         * @return {[type]} [description]
-         */
-        function refreshTree() {
-            $('#jstree').jstree(true).refresh();
-        }
+//      XXX
+        // // test button
+        // $("#testBtn").click(function() {
+        //     console.log("test button click");
+        //     $('#jstree').jstree(true).destroy();
+        // });
+    }
 
-        /**
-         * [getFoldersByRootArray description]
-         * @param  {[type]} id [description]
-         * @return {Array}    [description]
-         */
-        function getFoldersByRootArray(id) {
-            // TODO
-            var items = [];
-            retrieveAllFiles(function(item) {
-                var parent = item.parents == g_CurRootFolder ? '#' : item.parents
+    /**
+     * [refreshTree description]
+     * @return {[type]} [description]
+     */
+    function refreshTree() {
+        $('#jstree').jstree(true).refresh();
+    }   
 
-                items.push({
-                    'id': item.id,
-                    'parent': parent,
-                    'text': item.title
-                });
-            }, "'" + g_CurRootFolder + "' in parents and
-                    trashed = false and
-                    mimeType = 'application/vnd.google-apps.folder'");
-            return items;
-        }
+</script>
 
+<script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+<link rel="stylesheet" href="./libs/jtree/themes/default/style.min.css" />
+</head>
 
-        /**
-         * [getRootFolders description]
-         * @return {[type]} [description]
-         */
-        function getRootFolders(callback) {
-            retrieveAllFiles(callback, "'root' in parents and
-                                        trashed = false and
-                                        mimeType = 'application/vnd.google-apps.folder'");
-        }
-
-        /**
-         * [retrieveAllFiles description]
-         * @param  {Function} callback function(item), item is drive item
-         * @param  {[type]}   params   [description]
-         * @return {[type]}            [description]
-         */
-        function retrieveAllFiles(callback, params) {
-            retrieveAllFiles(function(result) {
-                result.forEach(function(item) {
-                    callback(item);
-                }
-            }           
-        }    
-
-		/**
-		 * Retrieve a list of File resources.
-         * Use retrieveAllFiles instead this function.
-		 * @param {Function} callback Function to call when the request is complete.
-		 */
-		function retrieveAllFilesByPage(callback, params) {
-            var retrievePageOfFiles = function(request, result) {
-    			request.execute(function(resp) {
-                    result = result.concat(resp.items);
-                    var nextPageToken = resp.nextPageToken;
-                    if (nextPageToken) {
-                        request = gapi.client.drive.files.list({
-                            'pageToken': nextPageToken,
-                            'q': params
-                        });
-    				    retrievePageOfFiles(request, result);  // page recursive
-                     } else {
-                        callback(result);
-                    }
-                });
-            }
-            var initialRequest = gapi.client.drive.files.list({'q': params});  // request with filter('q')
-            retrievePageOfFiles(initialRequest, []);
-        }
-	  
-    </script>
-    <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
-	
-    <link rel="stylesheet" href="./jtree/themes/default/style.min.css" />
-    </head>
 <body>
-<input type="button" id="authorizeButton" style="display: none" value="Authorize" />
 <select id="pageSelect">
     <option value="">choose root folder...</option>
 </select>
