@@ -1,41 +1,4 @@
 <html>
-<<<<<<< HEAD
-    <head>
-    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
-    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-    <script src="./jtree/jstree.min.js"></script>
-    <script type="text/javascript">
-        var CLIENT_ID = '460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com';
-        var SCOPES = 'https://www.googleapis.com/auth/drive';
-
-        var g_Data = [];
-        var g_CurRootFolder;
-    
-        // js init
-        $(function() {
-            // js tree
-            $('#jstree').jstree({
-                 "plugins": ["themes", "json_data"], 
-             
-                'core': {
-                    'data': function(obj, callback) {
-                        callback.call(this, getFoldersByRootArray(g_CurRootFolder));
-                     }   
-                },
-                'types' : {
-                    'default': {'icon': 'folder'},
-                    'file': {'valid_children': [], 'icon': 'file'}
-                },
-
-            }).on("changed.jstree", function (e, data) {
-                console.log(data.selected);
-            });
-
-            // root folder select
-            $("#pageSelect").on('change', function (e) {
-                g_CurRootFolder = this.value;
-            });
-=======
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
@@ -71,7 +34,6 @@
 
         }).on("changed.jstree", function (e, data) {
             // console.log(data.selected);
->>>>>>> pr/4
         });
 
         // root folder select
@@ -166,7 +128,7 @@
 <select id="pageSelect">
     <option value="">choose root folder...</option>
 </select>
-	
+
 <div id="jstree">
 </div>
 <button>Click</button>
