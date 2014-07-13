@@ -9,5 +9,8 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
+- url: /libs
+  static_dir: web/libs
+
 - url: .*
   script: web/index.html
