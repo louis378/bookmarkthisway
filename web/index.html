@@ -21,11 +21,16 @@
 
         // root folder select
         $("#pageSelect").on('change', function (e) {
-            tree.jstree.refresh();
+            tree.jstree.refresh(); // clear all node
 
+            // append root node
             var rootId = this.value;
+            var rootText = $(this).find("option:selected").text()
+            tree.appendNode('#', {'id': rootId, 'parent': '#', 'text': rootText});
+
+            // append children node
             googleDrive.getFoldersByRoot(rootId, function(item) {
-                var parentId = item.parents[0].id == rootId ? '#' : item.parents[0].id;
+                var parentId = item.parents[0].id;
                 var _tree = tree;  // internal reference
                 
                 _tree.appendNode(parentId,
