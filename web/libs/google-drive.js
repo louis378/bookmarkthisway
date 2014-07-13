@@ -42,26 +42,26 @@ GoogleDrive.prototype.getRootFolders = function(callback) {
 		"'root' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
 }
 
-// /**  XXX
-//  * [getFoldersByRoot description]
-//  * @param  {[type]}   id       [description]
-//  * @param  {Function} callback [description]
-//  * @return {[type]}            [description]
-//  */
-// GoogleDrive.prototype.getFoldersByRoot = function(id, callback) {
-// 	var _retrieveAllFiles = this.retrieveAllFiles;
+/**
+ * [getFoldersByRoot description]
+ * @param  {[type]}   id       [description]
+ * @param  {Function} callback [description]
+ * @return {[type]}            [description]
+ */
+GoogleDrive.prototype.getFoldersByRoot = function(id, callback) {
+	var _retrieveAllFiles = this.retrieveAllFiles;
 
-//     var _retrieveChildren = function(_id) {
-//         _retrieveAllFiles(function(item) {
-//         	if (item.mimeType == "application/vnd.google-apps.folder") {
-//         		callback(item);
-//                 _retrieveChildren(item.id)
-//             }
-//         }, "'" + _id + "' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
-//     }
+    var _retrieveChildren = function(_id) {
+        _retrieveAllFiles(function(item) {
+        	if (item.mimeType == "application/vnd.google-apps.folder") {
+        		callback(item);
+                _retrieveChildren(item.id)
+            }
+        }, "'" + _id + "' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'");
+    }
 
-//     _retrieveChildren(id);
-// }
+    _retrieveChildren(id);
+}
 
 /**
  * Retrieve a list of File resources(AJAX).

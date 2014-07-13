@@ -3,6 +3,7 @@
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
+<script type="text/javascript" src="./libs/tree.js"></script>
 <script type="text/javascript" src="./libs/google-drive.js"></script>
 
 <script type="text/javascript">
@@ -10,52 +11,32 @@
     var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
     var SCOPES = 'https://www.googleapis.com/auth/drive';
 
+    var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
     // var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
-    var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-
+    var tree;
 
     // js init
     $(function() {
-        // js tree
-        $('#jstree').jstree({
-             "plugins": ["themes", "json_data"], 
-         
-            'core': {
-                data : {}
-                // 'data': function(obj, callback) {
-                //     // var items = getFoldersByRoot();
-                //     // callback.call(this, items);
-                //  }   
-            },
-            'types' : {
-                'default': {'icon': 'folder'},
-                'file': {'valid_children': [], 'icon': 'file'}
-            },
-
-        }).on("changed.jstree", function (e, data) {
-            // console.log(data.selected);
-        });
+        tree = new Tree('jstree');
 
         // root folder select
         $("#pageSelect").on('change', function (e) {
-            // XXX
-            // refreshTree();
-            // $('#jstree').jstree(true).destroy();
+            tree.jstree.refresh();
 
             var rootId = this.value;
-            // XXX
-            // googleDrive.getFoldersByRoot(rootId, function(item) {
-            //     var parentId = item.parents[0].id == rootId ? '#' : item.parents[0].id;
+            googleDrive.getFoldersByRoot(rootId, function(item) {
+                var parentId = item.parents[0].id == rootId ? '#' : item.parents[0].id;
+                var _tree = tree;  // internal reference
                 
-            //     appendNode(parentId,
-            //         {
-            //         'id': item.id,
-            //         'parent': parentId,
-            //         'text': item.title
-            //         }
-            //     );
+                _tree.appendNode(parentId,
+                    {
+                    'id': item.id,
+                    'parent': parentId,
+                    'text': item.title
+                    }
+                );
 
-            // });
+            });
         });
     });
 
@@ -81,42 +62,18 @@
     function authSuccess() {
         // Access token has been successfully retrieved, requests can be sent to the API.
         googleDrive.getRootFolders(function(item) {
-            // $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));  XXX
+            $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
         }); 
 
 
 //      XXX
-        // // test button
-        // $("#testBtn").click(function() {
-        //     // $('#jstree').jstree(true).open_all();
-        //     // $('#jstree').jstree(true).destroy();
-        // });
-    }
-
-    // /**
-    //  * [appendNode description]
-    //  * @param  {String} null(or '#') if parentId if is root
-    //  * @param  {[type]} node     [description]
-    //  * @return {[type]}          [description]
-    //  */
-    // function appendNode(parentId, node) {
-    //     var parent;
-    //     if (parentId != null && parentId != '#') {
-    //         parent = $('#' + parentId);
-    //     } else {
-    //         parent = parentId;
-    //     }
-
-    //     $('#jstree').jstree(true).create_node(parent, node, "last", function() {}, true);
-    // }
-
-    /**
-     * [refreshTree description]
-     * @return {[type]} [description]
-     */
-    function refreshTree() {
-        $('#jstree').jstree(true).refresh();
-    }   
+        // test button
+        $("#testBtn").click(function() {
+            // $('#jstree').jstree(true).open_all();
+            // $('#jstree').jstree(true).destroy();
+            // console.log($('#jstree').jstree(true));
+        });
+    }  
 
 </script>
 
@@ -131,6 +88,6 @@
 
 <div id="jstree">
 </div>
-<button>Click</button>
+<button id="testBtn">Click</button>
 </body>
 </html>
