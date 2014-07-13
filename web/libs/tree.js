@@ -1,32 +1,39 @@
 
+/**
+ * Manage the jstree instance.
+ * @param {String} domId jstree dom ID.
+ */
 function Tree(domId) {
 
 	this.id = domId;
 
 	// js tree
     $('#' + this.id).jstree({
-         "plugins": ["themes", "json_data"], 
+        'plugins': ['themes', 'json_data', 'types'], 
      
         'core': {
-            "check_callback": true,  
+            'check_callback': true,
+            'multiple' : false,
         },
         'types' : {
-            'default': {'icon': 'folder'},
-            'file': {'valid_children': [], 'icon': 'file'}
+            'valid_children': ['default', 'folder', 'file'],
+            'default': {'icon': 'jstree-folder'},
+            'folder': {'icon': 'jstree-folder'},
+            'file': {'valid_children': [], 'icon': 'jstree-file'}
         },
-
-    }).on("changed.jstree", function (e, data) {
-        // console.log(data.selected);
     });
 
-    this.jstree = $('#' + this.id).jstree(true);
+    // jquery object
+    this.$tree = $('#' + this.id);
+
+    // jstree variable
+    this.jstree = this.$tree.jstree(true);
 }
 
 /**
- * [appendNode description]
- * @param  {[type]} parentId [description]
- * @param  {[type]} node     [description]
- * @return {[type]}          [description]
+ * Append node to the tree.
+ * @param  {Object} parentId null or '#' means root.
+ * @param  {Object} node jstree node.
  */
 Tree.prototype.appendNode = function(parentId, node) {
 	var parent;
@@ -35,7 +42,12 @@ Tree.prototype.appendNode = function(parentId, node) {
     } else {
         parent = parentId;
     }
+    this.jstree.create_node(parent, node, 'last');
+}
 
-    console.log($('#' + this.id).jstree(true));
-    this.jstree.create_node(parent, node, "last");
+/**
+ * Clear all node.
+ */
+Tree.prototype.clear = function() {
+    this.jstree.refresh();
 }
