@@ -1,5 +1,6 @@
 /**
  * Constructor.
+ * google drive manager.
  * @param {String} clientId google API client ID.
  * @param {String} scope    ex: "https://www.googleapis.com/auth/drive";
  *                          see: https://developers.google.com/drive/web/scopes.
@@ -16,7 +17,6 @@ function GoogleDrive(clientId, scopes) {
 
 /**
  * [auth description]
- * @return {[type]} [description]
  */
 GoogleDrive.prototype.auth = function() {
 	var _onAuthFail = this.onAuthFail;
@@ -35,7 +35,7 @@ GoogleDrive.prototype.auth = function() {
 
 /**
  * [getRootFolders description]
- * @return {[type]} [description]
+ * @param  {Function} callback [description]
  */
 GoogleDrive.prototype.getRootFolders = function(callback) {
 	this.retrieveAllFiles(callback,
@@ -46,9 +46,8 @@ GoogleDrive.prototype.getRootFolders = function(callback) {
  * [getFoldersByRoot description]
  * @param  {[type]}   id       [description]
  * @param  {Function} callback [description]
- * @return {[type]}            [description]
  */
-GoogleDrive.prototype.getFoldersByRoot = function(id, callback) {
+GoogleDrive.prototype.getAllFoldersByRoot = function(id, callback) {
 	var _retrieveAllFiles = this.retrieveAllFiles;
 
     var _retrieveChildren = function(_id) {
@@ -61,6 +60,16 @@ GoogleDrive.prototype.getFoldersByRoot = function(id, callback) {
     }
 
     _retrieveChildren(id);
+}
+
+/**
+ * [getFiles description]
+ * @param  {[type]}   id       [description]
+ * @param  {Function} callback [description]
+ */
+GoogleDrive.prototype.getFiles = function(id, callback) {
+    this.retrieveAllFiles(callback,
+        "'" + id + "'" + " in parents and trashed = false"); // and mimeType = 'application/vnd.google-apps.folder'");
 }
 
 /**
