@@ -23,13 +23,13 @@ GoogleDrive.prototype.auth = function() {
 	var _onAuthSuccess = this.onAuthSuccess;
 	var handleAuthResult = function(authResult) {
 		if (authResult && !authResult.error) {
-            gapi.client.load('drive', 'v2', _onAuthSuccess);
+            gapi.client.load("drive", "v2", _onAuthSuccess);
         } else {
             _onAuthFail();
         }
 	}
 
-	gapi.auth.authorize({'client_id': this.clientId, 'scope': this.scopes, 'immediate': true},
+	gapi.auth.authorize({"client_id": this.clientId, "scope": this.scopes, "immediate": true},
 		handleAuthResult);
 };
 
@@ -88,8 +88,8 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
             var nextPageToken = resp.nextPageToken;
             if (nextPageToken) {
                 request = gapi.client.drive.files.list({
-                    'pageToken': nextPageToken,
-                    'q': params
+                    "pageToken": nextPageToken,
+                    "q": params
                 });
                 retrieveAllFilesByPage(request, result);  // page recursive
             } else {
@@ -99,6 +99,6 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
             }
         });
     }
-    var initialRequest = gapi.client.drive.files.list({'q': params});  // request with filter('q')
+    var initialRequest = gapi.client.drive.files.list({"q": params});  // request with filter('q')
     retrievePageOfFiles(initialRequest, []);
 }
