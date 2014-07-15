@@ -56,15 +56,17 @@
             googleDrive.getFiles(data.node.id, function(item) {
                 if (!contentTree.valid(curToken)) return;
 
-                var type;
+                var node = {
+                    "id": item.id, "parent": "#", "text": item.title
+                };
                 if (item.mimeType == "application/vnd.google-apps.folder") {
-                    type = "folder";
+                    node.type = "folder";
                 } else {
-                    type = "file";
+                    node.type = "file";
+                    node.icon = item.iconLink;
+                    console.log(item);
                 }
-                contentTree.appendNode("#",
-                    {"id": item.id, "parent": "#", "text": item.title, "type": type}
-                );
+                contentTree.appendNode("#", node);
             });
         });
 
