@@ -7,9 +7,9 @@
 <script type="text/javascript" src="./libs/google-drive.js"></script>
 
 <script type="text/javascript">
-    var CLIENT_ID = '460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com';
+    var CLIENT_ID = "460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com";
     var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
-    var SCOPES = 'https://www.googleapis.com/auth/drive';
+    var SCOPES = "https://www.googleapis.com/auth/drive";
 
     var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
     // var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
@@ -18,57 +18,65 @@
     // js init
     $(function() {
         // trees
-        folderTree = new Tree('folderTree');
-        contentTree = new Tree('contentTree');
+        folderTree = new FolderTree("folderTree");
+        contentTree = new ContentTree("contentTree");
 
         // root folder select
-        $("#pageSelect").on('change', function (e) {
+        $("#pageSelect").on("change", function (e) {
             // clear all node
             folderTree.clear();
 
             // append root node
             var rootId = this.value;
             var rootText = $(this).find("option:selected").text()
-            folderTree.appendNode('#',
-                {'id': rootId, 'parent': '#', 'text': rootText});
+            folderTree.appendNode("#",
+                {"id": rootId, "parent": "#", "text": rootText});
 
             // append children node
-            var _tree = folderTree;  // internal reference
+            folderTree.generateToken();
+            var curToken = folderTree.token;
             googleDrive.getAllFoldersByRoot(rootId, function(item) {
-                var parentId = item.parents[0].id;
-                _tree.appendNode(parentId,
-                    {'id': item.id, 'parent': parentId, 'text': item.title}
-                );
+                if (!folderTree.valid(curToken)) return;
 
+                var parentId = item.parents[0].id;
+                folderTree.appendNode(parentId,
+                    {"id": item.id, "parent": parentId, "text": item.title}
+                );
+                folderTree.jstree.open_all();
             });
 
         });
 
         // XXX
         folderTree.$tree.on("select_node.jstree", function (e, data) {
-            console.log(data);
             contentTree.clear();
-            var _tree = contentTree;  // internal reference
+            contentTree.generateToken();
+            var curToken = contentTree.token;
+
             googleDrive.getFiles(data.node.id, function(item) {
-                console.log();
-                var type;
-                if (item.mimeType == 'application/vnd.google-apps.folder') {
-                    type = 'folder';
+                if (!contentTree.valid(curToken)) return;
+
+                var node = {
+                    "id": item.id, "parent": "#", "text": item.title
+                };
+                if (item.mimeType == "application/vnd.google-apps.folder") {
+                    node.type = "folder";
                 } else {
-                    type = 'file';
+                    node.type = "file";
+                    node.icon = item.iconLink;
+                    console.log(item);
                 }
-                _tree.appendNode('#',
-                    {'id': item.id, 'parent': '#', 'text': item.title, 'type': type}
-                );
+                contentTree.appendNode("#", node);
             });
         });
 
         //      XXX
         // test button
         $("#testBtn").click(function() {
-            // $('#jstree').jstree(true).open_all();
-            // $('#jstree').jstree(true).destroy();
-            // console.log($('#jstree').jstree(true));
+
+            // $("#jstree").jstree(true).open_all();
+            // $("#jstree").jstree(true).destroy();
+            // console.log($("#jstree").jstree(true));
         });
     });
 
