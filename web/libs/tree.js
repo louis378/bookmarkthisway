@@ -8,6 +8,9 @@ function Tree(domId, configure) {
 	this.id = domId;
 
 	// js tree
+    // configure.contextmenu = {
+    //         "items": folderTreeCustomMenu
+    // }; 
     $("#" + this.id).jstree(configure);
 
     // jquery object
@@ -23,10 +26,16 @@ function Tree(domId, configure) {
 
 /**
  * Append node to the tree.
- * @param  {Object} parentId null or '#' means root.
+ * @param  {String} parentId null or '#' means root.
  * @param  {Object} node jstree node.
+ * @param  {String} tiken if not equals current token will do nothing.
  */
-Tree.prototype.appendNode = function(parentId, node) {
+Tree.prototype.appendNode = function(parentId, node, token) {
+    console.log("cur: " + this.token + ", par: " + token)
+    if (!this.valid(token)) {
+        return;
+    }
+
 	var parent;
     if (parentId != null && parentId != "#") {
         parent = $("#" + parentId);
@@ -45,13 +54,14 @@ Tree.prototype.clear = function() {
 
 /**
  * [generateToken description]
- * @return {[type]} [description]
+ * @return {[String]} new current tiken
  */
 Tree.prototype.generateToken = function() {
     rand = function() {
         return Math.random().toString(36).substr(2);
     }
     this.token = rand() + rand();
+    return this.token;
 }
 
 /**
@@ -67,6 +77,7 @@ Tree.prototype.valid = function(token) {
     }
 }
 
+//  Folder Tree ---------------------------------------------------------------------------------------------
 /**
  * [FolderTree description]
  * @param {[type]} domId [description]
@@ -74,21 +85,50 @@ Tree.prototype.valid = function(token) {
 function FolderTree(domId) {
     return new Tree(domId,
     {
-        "plugins": ["themes", "json_data", "types"], 
+        "plugins": ["contextmenu", "themes", "json_data", "types"], 
      
         "core": {
             "check_callback": true,
             "multiple": false,
         },
+
         "types" : {
             "valid_children": ["default", "folder", "file"],
             "default": {"icon": "jstree-folder"},
             "folder": {"icon": "jstree-folder"},
             "file": {"valid_children": [], "icon": "jstree-file"}
         },
+
     });
 }
 
+/**
+ * [folderTreeCustomMenu description]
+ * @param  {[type]} node [description]
+ * @return {Object}      [description]
+ */
+function folderTreeCustomMenu(node) {
+     // The default set of all items
+    var items = {
+        renameItem: { // The "rename" menu item
+            label: "rename",
+            action: function () {}
+        },
+        deleteItem: { // The "delete" menu item
+            label: "delete",
+            action: function () {}
+        }
+    };
+
+    if ($(node).hasClass("folder")) {
+        // Delete the "delete" menu item
+        delete items.deleteItem;
+    }
+
+    return items;
+}
+
+//  Content Tree ---------------------------------------------------------------------------------------------
 /**
  * [ContentTree description]
  * @param {[type]} domId [description]
