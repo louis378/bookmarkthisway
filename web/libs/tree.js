@@ -31,7 +31,6 @@ function Tree(domId, configure) {
  * @param  {String} tiken if not equals current token will do nothing.
  */
 Tree.prototype.appendNode = function(parentId, node, token) {
-    console.log("cur: " + this.token + ", par: " + token)
     if (!this.valid(token)) {
         return;
     }
@@ -82,24 +81,68 @@ Tree.prototype.valid = function(token) {
  * [FolderTree description]
  * @param {[type]} domId [description]
  */
-function FolderTree(domId) {
-    return new Tree(domId,
+function FolderTree(domId, contextmenuCallBack) {
+    var tree = new Tree(domId,
     {
-        "plugins": ["contextmenu", "themes", "json_data", "types"], 
-     
         "core": {
             "check_callback": true,
             "multiple": false,
         },
 
-        "types" : {
-            "valid_children": ["default", "folder", "file"],
+        "types": {
+            "valid_children": ["default", "rootFolder", "file"],
+            "rootFolder": {"icon": "jstree-folder"},
             "default": {"icon": "jstree-folder"},
-            "folder": {"icon": "jstree-folder"},
             "file": {"valid_children": [], "icon": "jstree-file"}
         },
 
+        "plugins": ["contextmenu", "themes", "json_data", "types"],
+
+        "contextmenu": {
+            "items": function(node) {
+                var items = {
+                    "addLink": {
+                        "label": "Add Link",
+                        "icon": "glyphicon  glyphicon-link",
+                        "action": function() {
+                            contextmenuCallBack.addLink(node);
+                        }
+                    },
+                    "addFolder": {
+                        "label": "Add Folder",
+                        "icon": "glyphicon  glyphicon-folder-open",
+                        "action": function() {
+                            contextmenuCallBack.addFolder(node);
+                        }
+                    },
+                    "renameFolder": {
+                        "label": "Rename",
+                        "icon": "glyphicon  glyphicon-pencil",
+                        "action": function() {
+                            contextmenuCallBack.renameFolder(node);
+                        } 
+                    },
+                     "deleteFolder": {
+                        "label": "Delete",
+                        "icon": "glyphicon  glyphicon-trash",
+                        "action": function() {
+                            contextmenuCallBack.deleteFolder(node);
+                        }    
+                    },
+                };
+
+                if(this.get_type(node) === "rootFolder") {
+                    delete items.renameFolder;
+                    delete items.deleteFolder;
+                }
+
+
+                return items;
+            }
+        }
     });
+
+    return tree;
 }
 
 /**
@@ -142,7 +185,7 @@ function ContentTree(domId) {
             "check_callback": true,
             "multiple": true,
         },
-        "types" : {
+        "types": {
             "valid_children": ["default", "folder", "file"],
             "default": {"icon": "jstree-folder"},
             "folder": {"icon": "jstree-folder"},

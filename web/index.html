@@ -11,14 +11,29 @@
     var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
     var SCOPES = "https://www.googleapis.com/auth/drive";
 
-    // var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-    var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
+    // var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
     var folderTree, contentTree;
 
     // js init
     $(function() {
         // trees
-        folderTree = new FolderTree("folderTree");
+        folderTree = new FolderTree("folderTree", {
+            "addLink": function(node) {
+                alert("Add Link: " + node);
+            },
+            "addFolder": function() {
+                alert("Add Folder: " + node);
+            },
+            "renameFolder": function(node) {
+                alert("Rename: " + node);
+            },
+            "deleteFolder": function(node) {
+                alert("Delete: " + node);
+            }
+        });
+ 
+
         contentTree = new ContentTree("contentTree");
 
         // root folder select
@@ -54,7 +69,7 @@
 
         // append root node
         var rootText = $(this).find("option:selected").text();
-        var rootNode = {"id": rootId, "parent": "#", "text": rootText};
+        var rootNode = {"id": rootId, "parent": "#", "text": rootText, "type": "rootFolder"};
         folderTree.appendNode("#", rootNode, curToken);
 
         // append children node
@@ -81,7 +96,6 @@
                 } else {
                     node.type = "file";
                     node.icon = item.iconLink;
-                    console.log(item);
                 }
                 contentTree.appendNode("#", node, curToken);
             });
@@ -114,6 +128,7 @@
 
 <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 </head>
 
 <body>
