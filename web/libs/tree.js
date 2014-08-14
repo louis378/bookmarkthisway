@@ -8,6 +8,9 @@ function Tree(domId, configure) {
 	this.id = domId;
 
 	// js tree
+    // configure.contextmenu = {
+    //         "items": folderTreeCustomMenu
+    // }; 
     $("#" + this.id).jstree(configure);
 
     // jquery object
@@ -23,10 +26,15 @@ function Tree(domId, configure) {
 
 /**
  * Append node to the tree.
- * @param  {Object} parentId null or '#' means root.
+ * @param  {String} parentId null or '#' means root.
  * @param  {Object} node jstree node.
+ * @param  {String} tiken if not equals current token will do nothing.
  */
-Tree.prototype.appendNode = function(parentId, node) {
+Tree.prototype.appendNode = function(parentId, node, token) {
+    if (!this.valid(token)) {
+        return;
+    }
+
 	var parent;
     if (parentId != null && parentId != "#") {
         parent = $("#" + parentId);
@@ -45,13 +53,14 @@ Tree.prototype.clear = function() {
 
 /**
  * [generateToken description]
- * @return {[type]} [description]
+ * @return {[String]} new current tiken
  */
 Tree.prototype.generateToken = function() {
     rand = function() {
         return Math.random().toString(36).substr(2);
     }
     this.token = rand() + rand();
+    return this.token;
 }
 
 /**
@@ -67,28 +76,102 @@ Tree.prototype.valid = function(token) {
     }
 }
 
+//  Folder Tree ---------------------------------------------------------------------------------------------
 /**
  * [FolderTree description]
  * @param {[type]} domId [description]
  */
-function FolderTree(domId) {
-    return new Tree(domId,
+function FolderTree(domId, contextmenuCallBack) {
+    var tree = new Tree(domId,
     {
-        "plugins": ["themes", "json_data", "types"], 
-     
         "core": {
             "check_callback": true,
             "multiple": false,
         },
-        "types" : {
-            "valid_children": ["default", "folder", "file"],
+
+        "types": {
+            "valid_children": ["default", "rootFolder", "file"],
+            "rootFolder": {"icon": "jstree-folder"},
             "default": {"icon": "jstree-folder"},
-            "folder": {"icon": "jstree-folder"},
             "file": {"valid_children": [], "icon": "jstree-file"}
         },
+
+        "plugins": ["contextmenu", "themes", "json_data", "types"],
+
+        "contextmenu": {
+            "items": function(node) {
+                var items = {
+                    "addLink": {
+                        "label": "Add Link",
+                        "icon": "glyphicon  glyphicon-link",
+                        "action": function() {
+                            contextmenuCallBack.addLink(node);
+                        }
+                    },
+                    "addFolder": {
+                        "label": "Add Folder",
+                        "icon": "glyphicon  glyphicon-folder-open",
+                        "action": function() {
+                            contextmenuCallBack.addFolder(node);
+                        }
+                    },
+                    "renameFolder": {
+                        "label": "Rename",
+                        "icon": "glyphicon  glyphicon-pencil",
+                        "action": function() {
+                            contextmenuCallBack.renameFolder(node);
+                        } 
+                    },
+                     "deleteFolder": {
+                        "label": "Delete",
+                        "icon": "glyphicon  glyphicon-trash",
+                        "action": function() {
+                            contextmenuCallBack.deleteFolder(node);
+                        }    
+                    },
+                };
+
+                if(this.get_type(node) === "rootFolder") {
+                    delete items.renameFolder;
+                    delete items.deleteFolder;
+                }
+
+
+                return items;
+            }
+        }
     });
+
+    return tree;
 }
 
+/**
+ * [folderTreeCustomMenu description]
+ * @param  {[type]} node [description]
+ * @return {Object}      [description]
+ */
+function folderTreeCustomMenu(node) {
+     // The default set of all items
+    var items = {
+        renameItem: { // The "rename" menu item
+            label: "rename",
+            action: function () {}
+        },
+        deleteItem: { // The "delete" menu item
+            label: "delete",
+            action: function () {}
+        }
+    };
+
+    if ($(node).hasClass("folder")) {
+        // Delete the "delete" menu item
+        delete items.deleteItem;
+    }
+
+    return items;
+}
+
+//  Content Tree ---------------------------------------------------------------------------------------------
 /**
  * [ContentTree description]
  * @param {[type]} domId [description]
@@ -102,7 +185,7 @@ function ContentTree(domId) {
             "check_callback": true,
             "multiple": true,
         },
-        "types" : {
+        "types": {
             "valid_children": ["default", "folder", "file"],
             "default": {"icon": "jstree-folder"},
             "folder": {"icon": "jstree-folder"},

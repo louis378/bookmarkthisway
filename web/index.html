@@ -18,56 +18,32 @@
     // js init
     $(function() {
         // trees
-        folderTree = new FolderTree("folderTree");
+        folderTree = new FolderTree("folderTree", {
+            "addLink": function(node) {
+                alert("Add Link: " + node);
+            },
+            "addFolder": function() {
+                alert("Add Folder: " + node);
+            },
+            "renameFolder": function(node) {
+                alert("Rename: " + node);
+            },
+            "deleteFolder": function(node) {
+                alert("Delete: " + node);
+            }
+        });
+ 
+
         contentTree = new ContentTree("contentTree");
 
         // root folder select
         $("#pageSelect").on("change", function (e) {
-            // clear all node
-            folderTree.clear();
-
-            // append root node
-            var rootId = this.value;
-            var rootText = $(this).find("option:selected").text()
-            folderTree.appendNode("#",
-                {"id": rootId, "parent": "#", "text": rootText});
-
-            // append children node
-            folderTree.generateToken();
-            var curToken = folderTree.token;
-            googleDrive.getAllFoldersByRoot(rootId, function(item) {
-                if (!folderTree.valid(curToken)) return;
-
-                var parentId = item.parents[0].id;
-                folderTree.appendNode(parentId,
-                    {"id": item.id, "parent": parentId, "text": item.title}
-                );
-                folderTree.jstree.open_all();
-            });
-
+           changeRootFolder(this.value);
         });
 
         // XXX
         folderTree.$tree.on("select_node.jstree", function (e, data) {
-            contentTree.clear();
-            contentTree.generateToken();
-            var curToken = contentTree.token;
-
-            googleDrive.getFiles(data.node.id, function(item) {
-                if (!contentTree.valid(curToken)) return;
-
-                var node = {
-                    "id": item.id, "parent": "#", "text": item.title
-                };
-                if (item.mimeType == "application/vnd.google-apps.folder") {
-                    node.type = "folder";
-                } else {
-                    node.type = "file";
-                    node.icon = item.iconLink;
-                    console.log(item);
-                }
-                contentTree.appendNode("#", node);
-            });
+            refreshContentTree(data.node.id);
         });
 
         //      XXX
@@ -79,8 +55,51 @@
             // console.log($("#jstree").jstree(true));
         });
     });
-
     
+    /**
+     * [changeRootFolder description]
+     * @param  {String} rootId root ID form google drive folder.
+     */
+    function changeRootFolder(rootId) {
+         // clear all node
+        folderTree.clear();
+        contentTree.clear();
+        contentTree.generateToken();  // prevrnt old tree UI mainpulate
+        var curToken = folderTree.generateToken();
+
+        // append root node
+        var rootText = $(this).find("option:selected").text();
+        var rootNode = {"id": rootId, "parent": "#", "text": rootText, "type": "rootFolder"};
+        folderTree.appendNode("#", rootNode, curToken);
+
+        // append children node
+        googleDrive.getAllFoldersByRoot(rootId, function(item) {
+            var parentId = item.parents[0].id;
+            var node = {"id": item.id, "parent": parentId, "text": item.title};
+            folderTree.appendNode(parentId, node, curToken);
+            folderTree.jstree.open_all();
+        });
+    }
+
+    /**
+     * [refreshContentTree description]
+     * @param  {[String]} folderId form google drive folder ID.
+     */
+    function refreshContentTree(folderId) {
+        contentTree.clear();
+            var curToken = contentTree.generateToken();
+
+            googleDrive.getFiles(folderId, function(item) {
+                var node = {"id": item.id, "parent": "#", "text": item.title};
+                if (item.mimeType == "application/vnd.google-apps.folder") {
+                    node.type = "folder";
+                } else {
+                    node.type = "file";
+                    node.icon = item.iconLink;
+                }
+                contentTree.appendNode("#", node, curToken);
+            });
+    }
 
     /**
      * Called when the client library is loaded to start the auth flow.
@@ -96,8 +115,7 @@
     }
 
     /**
-     * [authSuccess description]
-     * @return {[type]}
+     * Auth success action.
      */
     function authSuccess() {
         // Access token has been successfully retrieved, requests can be sent to the API.
@@ -110,6 +128,7 @@
 
 <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 </head>
 
 <body>
