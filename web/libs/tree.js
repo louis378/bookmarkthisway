@@ -3,18 +3,15 @@
  * Manage the jstree instance.
  * @param {String} domId jstree dom ID.
  */
-function Tree(domId, configure) {
+function Tree(domId, domJstree) {
 
 	this.id = domId;
 
 	// js tree
-    // configure.contextmenu = {
-    //         "items": folderTreeCustomMenu
-    // }; 
-    $("#" + this.id).jstree(configure);
+   
 
     // jquery object
-    this.$tree = $("#" + this.id);
+    this.$tree = domJstree;
 
     // jstree variable
     this.jstree = this.$tree.jstree(true);
@@ -82,8 +79,7 @@ Tree.prototype.valid = function(token) {
  * @param {[type]} domId [description]
  */
 function FolderTree(domId, contextmenuCallBack) {
-    var tree = new Tree(domId,
-    {
+    jstree = $("#" + domId).jstree({
         "core": {
             "check_callback": true,
             "multiple": false,
@@ -139,11 +135,14 @@ function FolderTree(domId, contextmenuCallBack) {
 
                 return items;
             }
+
         }
     });
 
+    var tree = new Tree(domId, jstree);
+    console.log(jstree);
     return tree;
-}
+}    
 
 /**
  * [folderTreeCustomMenu description]
@@ -177,8 +176,7 @@ function folderTreeCustomMenu(node) {
  * @param {[type]} domId [description]
  */
 function ContentTree(domId) {
-    return new Tree(domId,
-    {
+    jstree = $("#" + domId).jstree({
         "plugins": ["themes", "json_data", "types"], 
      
         "core": {
@@ -192,4 +190,6 @@ function ContentTree(domId) {
             "file": {"valid_children": [], "icon": "jstree-file"}
         },
     });
+
+    return new Tree(domId, jstree);
 }

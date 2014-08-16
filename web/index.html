@@ -1,7 +1,10 @@
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
 <script type="text/javascript" src="./libs/tree.js"></script>
 <script type="text/javascript" src="./libs/google-drive.js"></script>
@@ -11,8 +14,8 @@
     var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
     var SCOPES = "https://www.googleapis.com/auth/drive";
 
-    var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-    // var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    // var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
+    var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
     var folderTree, contentTree;
 
     // js init
@@ -22,7 +25,7 @@
             "addLink": function(node) {
                 alert("Add Link: " + node);
             },
-            "addFolder": function() {
+            "addFolder": function(node) {
                 alert("Add Folder: " + node);
             },
             "renameFolder": function(node) {
@@ -33,7 +36,6 @@
             }
         });
  
-
         contentTree = new ContentTree("contentTree");
 
         // root folder select
@@ -44,15 +46,6 @@
         // XXX
         folderTree.$tree.on("select_node.jstree", function (e, data) {
             refreshContentTree(data.node.id);
-        });
-
-        //      XXX
-        // test button
-        $("#testBtn").click(function() {
-
-            // $("#jstree").jstree(true).open_all();
-            // $("#jstree").jstree(true).destroy();
-            // console.log($("#jstree").jstree(true));
         });
     });
     
@@ -75,7 +68,14 @@
         // append children node
         googleDrive.getAllFoldersByRoot(rootId, function(item) {
             var parentId = item.parents[0].id;
-            var node = {"id": item.id, "parent": parentId, "text": item.title};
+            var node = {
+                "id": item.id,
+                "parent": parentId,
+                "text": item.title,
+                "li_attr": {
+                    "title": item.title
+                }
+            };
             folderTree.appendNode(parentId, node, curToken);
             folderTree.jstree.open_all();
         });
@@ -109,15 +109,34 @@
             authSuccess();
         };
         googleDrive.onAuthFail = function() {
-            alert("auth fail");
+            handleClientLoadFailed();
         }
-        googleDrive.auth();
+
+        googleDrive.auth(false);
+    }
+
+    /**
+     * [handleClientLoadFailed description]
+     * @return {[type]} [description]
+     */
+    function handleClientLoadFailed() {
+        googleDrive.onAuthFail = function() {
+            alert("auth failed");
+        }
+
+        $("#loginBtn").attr('disabled', false)
+                    .click(function() {
+                        googleDrive.auth(true);
+                    });
     }
 
     /**
      * Auth success action.
      */
     function authSuccess() {
+        // login button invisible
+        $("#loginBtn").hide();
+
         // Access token has been successfully retrieved, requests can be sent to the API.
         googleDrive.getRootFolders(function(item) {
             $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
@@ -128,19 +147,38 @@
 
 <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
+
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 </head>
 
 <body>
-<select id="pageSelect">
-    <option value="">choose root folder...</option>
-</select>
-	
-<div id="folderTree">
+<!-- header -->
+<header>
+    <h1>Bookmark This Way</h1>
+</header>    
+
+<div>
+    <button title="qq" id="loginBtn" class="btn btn-danger" disabled>
+        <i class="fa fa-google-plus-square fa-2x" style="vertical-align:middle"></i> Login
+    </button>
 </div>
-<h1>content</h1>
-<div id="contentTree">
-</div>    
-<button id="testBtn">Click</button>
+
+<div class="row" style="margin: 20px 0px;"> 
+    <section class="col-xs-2"> 
+        <select id="pageSelect" class="form-control">
+            <option value="">choose root folder...</option>
+        </select>
+    </section>
+</div>
+
+<div class="row">
+    <div id="folderTree" class="col-md-6"></div>
+
+    <div id="contentTree" class="col-md-6"></div>
+</div>
+
 </body>
 </html>

@@ -17,8 +17,10 @@ function GoogleDrive(clientId, scopes) {
 
 /**
  * [auth description]
+ * @param  {[boolean]} showPopup show auth popup ui?
+ * @return {[type]}           [description]
  */
-GoogleDrive.prototype.auth = function() {
+GoogleDrive.prototype.auth = function(showPopup) {
 	var _onAuthFail = this.onAuthFail;
 	var _onAuthSuccess = this.onAuthSuccess;
 	var handleAuthResult = function(authResult) {
@@ -29,7 +31,7 @@ GoogleDrive.prototype.auth = function() {
         }
 	}
 
-	gapi.auth.authorize({"client_id": this.clientId, "scope": this.scopes, "immediate": true},
+	gapi.auth.authorize({"client_id": this.clientId, "scope": this.scopes, "immediate": !showPopup},
 		handleAuthResult);
 };
 
