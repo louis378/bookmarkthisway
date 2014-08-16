@@ -104,3 +104,22 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
     var initialRequest = gapi.client.drive.files.list({"q": params});  // request with filter('q')
     retrievePageOfFiles(initialRequest, []);
 }
+
+/**
+ * [renameFile description]
+ * @param  {[type]}   fileId   [description]
+ * @param  {[type]}   newTitle [description]
+ * @param  {Function} callback callback(file)
+ * @return {[type]}            [description]
+ */
+GoogleDrive.prototype.rename = function(fileId, newTitle, callback) {
+    var body = {'title': newTitle};
+    var request = gapi.client.drive.files.patch({
+        'fileId': fileId,
+        'resource': body
+    });
+
+    request.execute(function(resp) {
+        callback(resp);
+    });
+}

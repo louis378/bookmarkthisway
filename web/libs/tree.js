@@ -140,7 +140,6 @@ function FolderTree(domId, contextmenuCallBack) {
     });
 
     var tree = new Tree(domId, jstree);
-    console.log(jstree);
     return tree;
 }    
 

@@ -3,11 +3,13 @@
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
 <script type="text/javascript" src="./libs/tree.js"></script>
 <script type="text/javascript" src="./libs/google-drive.js"></script>
+<script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
 <script type="text/javascript">
     var CLIENT_ID = "460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com";
@@ -29,18 +31,30 @@
                 alert("Add Folder: " + node);
             },
             "renameFolder": function(node) {
-                alert("Rename: " + node);
+                folderTree.jstree.edit(node.id);
             },
             "deleteFolder": function(node) {
                 alert("Delete: " + node);
             }
         });
- 
+
+        // rename event
+        folderTree.$tree.bind("rename_node.jstree", function(e, data) {
+            googleDrive.rename(data.node.id, data.text, function(resp) {
+                if (!resp.error) {
+
+                } else {  // drive rename failed
+                    JqUi.popupMessage("error", "Rename failed!");
+                    refreshRootFolder($("#pageSelect").value);
+                }
+            });
+        });
+
         contentTree = new ContentTree("contentTree");
 
         // root folder select
         $("#pageSelect").on("change", function (e) {
-           changeRootFolder(this.value);
+           refreshRootFolder(this.value);
         });
 
         // XXX
@@ -53,7 +67,7 @@
      * [changeRootFolder description]
      * @param  {String} rootId root ID form google drive folder.
      */
-    function changeRootFolder(rootId) {
+    function refreshRootFolder(rootId) {
          // clear all node
         folderTree.clear();
         contentTree.clear();
@@ -148,6 +162,7 @@
 <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
 
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/le-frog/jquery-ui.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 
@@ -175,9 +190,9 @@
 </div>
 
 <div class="row">
-    <div id="folderTree" class="col-md-6"></div>
+    <div id="folderTree" class="col-md-4"></div>
 
-    <div id="contentTree" class="col-md-6"></div>
+    <div id="contentTree" class="col-md-4"></div>
 </div>
 
 </body>
