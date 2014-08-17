@@ -148,6 +148,7 @@
         var rootText = $(this).find("option:selected").text();
         var rootNode = {"id": rootId, "parent": "#", "text": rootText, "type": TREE_NODE_TYPE_ROOT_FOLDER};
         g_FolderTree.appendNode("#", rootNode, curToken);
+        g_FolderTree.jstree.select_node(rootNode);
 
         // append children node
         g_GoogleDrive.getAllFoldersByRoot(rootId, function(item) {
