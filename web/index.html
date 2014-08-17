@@ -17,23 +17,18 @@
     var SCOPES = "https://www.googleapis.com/auth/drive";
 
     // var googleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-    var googleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
-    var folderTree, contentTree;
+    var g_GoogleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    var g_FolderTree, contentTree;
 
     // js init
     $(function() {
         // trees
-        folderTree = createFolderTree();
-        contentTree = new ContentTree("contentTree");
+        g_FolderTree = createFolderTree();
+        g_ContentTree = new ContentTree("contentTree");
 
         // root folder select
         $("#pageSelect").on("change", function (e) {
            refreshRootFolder(this.value);
-        });
-
-        // XXX
-        folderTree.$tree.on("select_node.jstree", function (e, data) {
-            refreshContentTree(data.node.id);
         });
     });
     
@@ -42,24 +37,11 @@
      * @return {FolderTree} [description]
      */
     function createFolderTree() {
-        result = new FolderTree("folderTree", {
-            "addLink": function(node) {
-                alert("Add Link: " + node);
-            },
-            "addFolder": function(node) {
-                alert("Add Folder: " + node);
-            },
-            "renameFolder": function(node) {
-                folderTree.jstree.edit(node.id);
-            },
-            "deleteFolder": function(node) {
-                alert("Delete: " + node);
-            }
-        });
+        result = new FolderTree("folderTree", createContextMenuCallback());
 
         // rename event
         result.$tree.bind("rename_node.jstree", function(e, data) {
-            googleDrive.rename(data.node.id, data.text, function(resp) {
+            g_GoogleDrive.rename(data.node.id, data.text, function(resp) {
                 if (!resp.error) {
 
                 } else {  // drive rename failed
@@ -69,7 +51,86 @@
             });
         });
 
+        // select event
+        result.$tree.on("select_node.jstree", function (e, data) {
+            refreshContentTree(data.node.id);
+        });
+
+        // deselect event
+        result.$tree.on("deselect_all.jstree", function (e, data) {
+            if (g_ContentTree) {
+                g_ContentTree.clear();
+            }
+        });
+
         return result;
+    }
+
+    /**
+     * [createContextMenuCallback description]
+     * @return {[type]} [description]
+     */
+    function createContextMenuCallback() {
+        return {
+            // add link
+            "addLink": function(node) {
+                alert("Add Link: " + node);
+            },
+
+            // add folder
+            "addFolder": function(node) {
+                g_GoogleDrive.createFolder(node.id, "New Folder", function(resp) {
+                    if (!resp.error) {
+                        var token = g_FolderTree.token;
+                        var newFolder = {
+                            "id": resp.id,
+                            "text": resp.title,
+                            "type": TREE_NODE_TYPE_FOLDER,
+                        };
+
+                        g_FolderTree.appendNode(node.id, newFolder, token);  // append to folder tree
+
+                        g_FolderTree.jstree.deselect_all();
+                        g_FolderTree.jstree.select_node(newFolder);
+
+                        g_FolderTree.jstree.edit(newFolder.id);  // edit(rename)
+
+                    } else {  // drive rename failed
+                        JqUi.popupMessage("error", "Add new folder failed!");
+                        refreshRootFolder($("#pageSelect").value);
+                    }
+                });
+            },
+
+            // rename folder
+            "renameFolder": function(node) {
+                g_FolderTree.jstree.edit(node.id);
+            },
+
+            // delete folder
+            "deleteFolder": function(node) {
+                var trashFile = function() {
+                    g_GoogleDrive.trashFile(node.id, function(resp) {
+                        if (!resp.error) {
+                            g_FolderTree.jstree.delete_node(node);
+                            g_FolderTree.jstree.deselect_all();
+
+                        } else {  // drive rename failed
+                            JqUi.popupMessage("error", "Rename failed!");
+                            refreshRootFolder($("#pageSelect").value);
+                        }
+                    });
+                }
+
+                var buttons = {
+                    "Delete": function() {
+                        trashFile();
+                    },
+                    "Cancel": function() {},
+                };
+                JqUi.popupWithButtons("Delete Folder", "Are you sure delete this folder: " + node.text, buttons);
+            }
+        };
     }
 
     /**
@@ -78,18 +139,18 @@
      */
     function refreshRootFolder(rootId) {
          // clear all node
-        folderTree.clear();
-        contentTree.clear();
-        contentTree.generateToken();  // prevrnt old tree UI mainpulate
-        var curToken = folderTree.generateToken();
+        g_FolderTree.clear();
+        g_ContentTree.clear();
+        g_ContentTree.generateToken();  // prevrnt old tree UI mainpulate
+        var curToken = g_FolderTree.generateToken();
 
         // append root node
         var rootText = $(this).find("option:selected").text();
-        var rootNode = {"id": rootId, "parent": "#", "text": rootText, "type": "rootFolder"};
-        folderTree.appendNode("#", rootNode, curToken);
+        var rootNode = {"id": rootId, "parent": "#", "text": rootText, "type": TREE_NODE_TYPE_ROOT_FOLDER};
+        g_FolderTree.appendNode("#", rootNode, curToken);
 
         // append children node
-        googleDrive.getAllFoldersByRoot(rootId, function(item) {
+        g_GoogleDrive.getAllFoldersByRoot(rootId, function(item) {
             var parentId = item.parents[0].id;
             var node = {
                 "id": item.id,
@@ -97,10 +158,11 @@
                 "text": item.title,
                 "li_attr": {
                     "title": item.title
-                }
+                },
+                "type": TREE_NODE_TYPE_FOLDER
             };
-            folderTree.appendNode(parentId, node, curToken);
-            folderTree.jstree.open_all();
+            g_FolderTree.appendNode(parentId, node, curToken);
+            g_FolderTree.jstree.open_all();
         });
     }
 
@@ -109,18 +171,21 @@
      * @param  {[String]} folderId form google drive folder ID.
      */
     function refreshContentTree(folderId) {
-        contentTree.clear();
-            var curToken = contentTree.generateToken();
+        g_ContentTree.clear();
+            var curToken = g_ContentTree.generateToken();
 
-            googleDrive.getFiles(folderId, function(item) {
+            g_GoogleDrive.getFiles(folderId, function(item) {
                 var node = {"id": item.id, "parent": "#", "text": item.title};
+
+                // append node type
                 if (item.mimeType == "application/vnd.google-apps.folder") {
-                    node.type = "folder";
+                    node.type = TREE_NODE_TYPE_FOLDER;
                 } else {
-                    node.type = "file";
+                    node.type = TREE_NODE_TYPE_LINK;
                     node.icon = item.iconLink;
                 }
-                contentTree.appendNode("#", node, curToken);
+
+                g_ContentTree.appendNode("#", node, curToken);
             });
     }
 
@@ -128,14 +193,14 @@
      * Called when the client library is loaded to start the auth flow.
      */
     function handleClientLoad() {
-        googleDrive.onAuthSuccess = function() {
+        g_GoogleDrive.onAuthSuccess = function() {
             authSuccess();
         };
-        googleDrive.onAuthFail = function() {
+        g_GoogleDrive.onAuthFail = function() {
             handleClientLoadFailed();
         }
 
-        googleDrive.auth(false);
+        g_GoogleDrive.auth(false);
     }
 
     /**
@@ -143,14 +208,13 @@
      * @return {[type]} [description]
      */
     function handleClientLoadFailed() {
-        googleDrive.onAuthFail = function() {
+        g_GoogleDrive.onAuthFail = function() {
             alert("auth failed");
         }
 
-        $("#loginBtn").attr('disabled', false)
-                    .click(function() {
-                        googleDrive.auth(true);
-                    });
+        $("#loginBtn").attr('disabled', false).click(function() {
+            g_GoogleDrive.auth(true);
+        });
     }
 
     /**
@@ -161,7 +225,7 @@
         $("#loginBtn").hide();
 
         // Access token has been successfully retrieved, requests can be sent to the API.
-        googleDrive.getRootFolders(function(item) {
+        g_GoogleDrive.getRootFolders(function(item) {
             $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
         }); 
     }  

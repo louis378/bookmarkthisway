@@ -1,4 +1,8 @@
 
+const TREE_NODE_TYPE_ROOT_FOLDER = "rootFolder";
+const TREE_NODE_TYPE_FOLDER = "folder";
+const TREE_NODE_TYPE_LINK = "link";
+
 /**
  * Manage the jstree instance.
  * @param {String} domId jstree dom ID.
@@ -86,10 +90,9 @@ function FolderTree(domId, contextmenuCallBack) {
         },
 
         "types": {
-            "valid_children": ["default", "rootFolder", "file"],
-            "rootFolder": {"icon": "jstree-folder"},
-            "default": {"icon": "jstree-folder"},
-            "file": {"valid_children": [], "icon": "jstree-file"}
+            "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
+            TREE_NODE_TYPE_ROOT_FOLDER: {"icon": "jstree-folder"},
+            TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
         },
 
         "plugins": ["contextmenu", "themes", "json_data", "types"],
@@ -127,7 +130,7 @@ function FolderTree(domId, contextmenuCallBack) {
                     },
                 };
 
-                if(this.get_type(node) === "rootFolder") {
+                if(this.get_type(node) === TREE_NODE_TYPE_ROOT_FOLDER) {
                     delete items.renameFolder;
                     delete items.deleteFolder;
                 }
@@ -144,8 +147,14 @@ function FolderTree(domId, contextmenuCallBack) {
     tree.$tree.on('keydown.jstree', '.jstree-anchor', function(e) {
         var node = tree.jstree.get_node(this)
         switch (e.which) {
-            case 113:  // F2
+            // F2
+            case 113:
                 contextmenuCallBack.renameFolder(node);
+                break;
+
+            // Del
+            case 46:
+                contextmenuCallBack.deleteFolder(node);
                 break;
 
             default:
@@ -197,10 +206,9 @@ function ContentTree(domId) {
             "multiple": true,
         },
         "types": {
-            "valid_children": ["default", "folder", "file"],
-            "default": {"icon": "jstree-folder"},
-            "folder": {"icon": "jstree-folder"},
-            "file": {"valid_children": [], "icon": "jstree-file"}
+            "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_LINK],
+            TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
+            TREE_NODE_TYPE_LINK: {"valid_children": [], "icon": "jstree-file"}
         },
     });
 
