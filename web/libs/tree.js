@@ -138,8 +138,22 @@ function FolderTree(domId, contextmenuCallBack) {
 
         }
     });
-
     var tree = new Tree(domId, jstree);
+
+    // keydown
+    tree.$tree.on('keydown.jstree', '.jstree-anchor', function(e) {
+        var node = tree.jstree.get_node(this)
+        switch (e.which) {
+            case 113:  // F2
+                contextmenuCallBack.renameFolder(node);
+                break;
+
+            default:
+                // do nothing
+                break;    
+        }
+    });
+
     return tree;
 }    
 

@@ -23,7 +23,26 @@
     // js init
     $(function() {
         // trees
-        folderTree = new FolderTree("folderTree", {
+        folderTree = createFolderTree();
+        contentTree = new ContentTree("contentTree");
+
+        // root folder select
+        $("#pageSelect").on("change", function (e) {
+           refreshRootFolder(this.value);
+        });
+
+        // XXX
+        folderTree.$tree.on("select_node.jstree", function (e, data) {
+            refreshContentTree(data.node.id);
+        });
+    });
+    
+    /**
+     * [createFolderTree description]
+     * @return {FolderTree} [description]
+     */
+    function createFolderTree() {
+        result = new FolderTree("folderTree", {
             "addLink": function(node) {
                 alert("Add Link: " + node);
             },
@@ -39,7 +58,7 @@
         });
 
         // rename event
-        folderTree.$tree.bind("rename_node.jstree", function(e, data) {
+        result.$tree.bind("rename_node.jstree", function(e, data) {
             googleDrive.rename(data.node.id, data.text, function(resp) {
                 if (!resp.error) {
 
@@ -50,19 +69,9 @@
             });
         });
 
-        contentTree = new ContentTree("contentTree");
+        return result;
+    }
 
-        // root folder select
-        $("#pageSelect").on("change", function (e) {
-           refreshRootFolder(this.value);
-        });
-
-        // XXX
-        folderTree.$tree.on("select_node.jstree", function (e, data) {
-            refreshContentTree(data.node.id);
-        });
-    });
-    
     /**
      * [changeRootFolder description]
      * @param  {String} rootId root ID form google drive folder.
