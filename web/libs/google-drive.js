@@ -17,8 +17,10 @@ function GoogleDrive(clientId, scopes) {
 
 /**
  * [auth description]
+ * @param  {[boolean]} showPopup show auth popup ui?
+ * @return {[type]}           [description]
  */
-GoogleDrive.prototype.auth = function() {
+GoogleDrive.prototype.auth = function(showPopup) {
 	var _onAuthFail = this.onAuthFail;
 	var _onAuthSuccess = this.onAuthSuccess;
 	var handleAuthResult = function(authResult) {
@@ -29,7 +31,7 @@ GoogleDrive.prototype.auth = function() {
         }
 	}
 
-	gapi.auth.authorize({"client_id": this.clientId, "scope": this.scopes, "immediate": true},
+	gapi.auth.authorize({"client_id": this.clientId, "scope": this.scopes, "immediate": !showPopup},
 		handleAuthResult);
 };
 
@@ -101,4 +103,59 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
     }
     var initialRequest = gapi.client.drive.files.list({"q": params});  // request with filter('q')
     retrievePageOfFiles(initialRequest, []);
+}
+
+/**
+ * [renameFile description]
+ * @param  {[type]}   fileId   [description]
+ * @param  {[type]}   newTitle [description]
+ * @param  {Function} callback callback(file)
+ */
+GoogleDrive.prototype.rename = function(fileId, newTitle, callback) {
+    var data = {'title': newTitle};
+    var request = gapi.client.drive.files.patch({
+        'fileId': fileId,
+        'resource': data
+    });
+
+    request.execute(function(resp) {
+        callback(resp);
+    });
+}
+
+/**
+ * [createFolder description]
+ * @param  {[type]}   parentId [description]
+ * @param  {[type]}   title    [description]
+ * @param  {Function} callback callback(file)
+ */
+GoogleDrive.prototype.createFolder = function(parentId, title, callback) {
+    var data = {
+        "title": title,
+        "parents": [{"id": parentId}],
+        "mimeType": "application/vnd.google-apps.folder"
+    };
+
+    var request = gapi.client.drive.files.insert({
+        'resource': data
+    });
+
+    request.execute(function(resp) {
+        callback(resp);
+    });
+}
+
+/**
+ * [trashFile description]
+ * @param  {[type]}   id       [description]
+ * @param  {Function} callback callback(file)
+ */
+GoogleDrive.prototype.trashFile = function(fileId, callback) {
+  var request = gapi.client.drive.files.trash({
+    'fileId': fileId
+  });
+
+  request.execute(function(resp) {
+    callback(resp);
+  });
 }

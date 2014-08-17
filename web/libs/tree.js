@@ -1,20 +1,21 @@
 
+const TREE_NODE_TYPE_ROOT_FOLDER = "rootFolder";
+const TREE_NODE_TYPE_FOLDER = "folder";
+const TREE_NODE_TYPE_LINK = "link";
+
 /**
  * Manage the jstree instance.
  * @param {String} domId jstree dom ID.
  */
-function Tree(domId, configure) {
+function Tree(domId, domJstree) {
 
 	this.id = domId;
 
 	// js tree
-    // configure.contextmenu = {
-    //         "items": folderTreeCustomMenu
-    // }; 
-    $("#" + this.id).jstree(configure);
+   
 
     // jquery object
-    this.$tree = $("#" + this.id);
+    this.$tree = domJstree;
 
     // jstree variable
     this.jstree = this.$tree.jstree(true);
@@ -82,18 +83,16 @@ Tree.prototype.valid = function(token) {
  * @param {[type]} domId [description]
  */
 function FolderTree(domId, contextmenuCallBack) {
-    var tree = new Tree(domId,
-    {
+    jstree = $("#" + domId).jstree({
         "core": {
             "check_callback": true,
             "multiple": false,
         },
 
         "types": {
-            "valid_children": ["default", "rootFolder", "file"],
-            "rootFolder": {"icon": "jstree-folder"},
-            "default": {"icon": "jstree-folder"},
-            "file": {"valid_children": [], "icon": "jstree-file"}
+            "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
+            TREE_NODE_TYPE_ROOT_FOLDER: {"icon": "jstree-folder"},
+            TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
         },
 
         "plugins": ["contextmenu", "themes", "json_data", "types"],
@@ -131,7 +130,7 @@ function FolderTree(domId, contextmenuCallBack) {
                     },
                 };
 
-                if(this.get_type(node) === "rootFolder") {
+                if(this.get_type(node) === TREE_NODE_TYPE_ROOT_FOLDER) {
                     delete items.renameFolder;
                     delete items.deleteFolder;
                 }
@@ -139,11 +138,33 @@ function FolderTree(domId, contextmenuCallBack) {
 
                 return items;
             }
+
+        }
+    });
+    var tree = new Tree(domId, jstree);
+
+    // keydown
+    tree.$tree.on('keydown.jstree', '.jstree-anchor', function(e) {
+        var node = tree.jstree.get_node(this)
+        switch (e.which) {
+            // F2
+            case 113:
+                contextmenuCallBack.renameFolder(node);
+                break;
+
+            // Del
+            case 46:
+                contextmenuCallBack.deleteFolder(node);
+                break;
+
+            default:
+                // do nothing
+                break;    
         }
     });
 
     return tree;
-}
+}    
 
 /**
  * [folderTreeCustomMenu description]
@@ -177,8 +198,7 @@ function folderTreeCustomMenu(node) {
  * @param {[type]} domId [description]
  */
 function ContentTree(domId) {
-    return new Tree(domId,
-    {
+    jstree = $("#" + domId).jstree({
         "plugins": ["themes", "json_data", "types"], 
      
         "core": {
@@ -186,10 +206,11 @@ function ContentTree(domId) {
             "multiple": true,
         },
         "types": {
-            "valid_children": ["default", "folder", "file"],
-            "default": {"icon": "jstree-folder"},
-            "folder": {"icon": "jstree-folder"},
-            "file": {"valid_children": [], "icon": "jstree-file"}
+            "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_LINK],
+            TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
+            TREE_NODE_TYPE_LINK: {"valid_children": [], "icon": "jstree-file"}
         },
     });
+
+    return new Tree(domId, jstree);
 }
