@@ -145,11 +145,20 @@ function FolderTree(domId, contextmenuCallBack) {
 
     // keydown
     tree.$tree.on('keydown.jstree', '.jstree-anchor', function(e) {
+        console.log(e);
+
         var node = tree.jstree.get_node(this)
         switch (e.which) {
             // F2
             case 113:
                 contextmenuCallBack.renameFolder(node);
+                break;
+
+            // ctrl + shift + 'F'
+            case 70:
+                if (e.ctrlKey && e.shiftKey) {
+                    contextmenuCallBack.addFolder(node);
+                }
                 break;
 
             // Del
@@ -203,7 +212,7 @@ function ContentTree(domId) {
      
         "core": {
             "check_callback": true,
-            "multiple": true,
+            "multiple": false,
         },
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_LINK],
