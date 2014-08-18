@@ -91,8 +91,11 @@ function FolderTree(domId, contextmenuCallBack) {
 
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
-            TREE_NODE_TYPE_ROOT_FOLDER: {"icon": "jstree-folder"},
-            TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
+            "types": {
+                    "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
+                    TREE_NODE_TYPE_ROOT_FOLDER: {"icon": "jstree-folder"},
+                    TREE_NODE_TYPE_FOLDER: {"icon": "glyphicon  glyphicon-link"},
+            }
         },
 
         "plugins": ["contextmenu", "themes", "json_data", "types"],
@@ -217,7 +220,7 @@ function ContentTree(domId) {
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_LINK],
             TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
-            TREE_NODE_TYPE_LINK: {"valid_children": [], "icon": "jstree-file"}
+            TREE_NODE_TYPE_LINK: {"valid_children": [], "icon": "jstree-file"},
         },
     });
 
