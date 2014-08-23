@@ -1,3 +1,5 @@
+// include jquery first then this library for escape html string
+
 /**
  * Constructor.
  * google drive manager.
@@ -96,6 +98,10 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
                 retrieveAllFilesByPage(request, result);  // page recursive
             } else {
                 result.forEach(function(item) {
+                    // XXX escape html
+                    if (item.title) {
+                        item.title = $("<div/>").text(item.title).html();
+                    }
                 	callback(item);
                 });	
             }
