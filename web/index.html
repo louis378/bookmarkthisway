@@ -80,8 +80,25 @@
                     "window": {"title": "Add Link", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
                 },
                 function(bookmark) {
-                    alert("title: " + bookmark.title + ", url: " + bookmark.url + ", des: " + bookmark.description);
-                    return false;
+                    var metadata = {
+                        "title": bookmark.title,
+                        "mimeType": "text/plain",
+                        "parents": [{"id": node.id}],
+                        "description": bookmark.description,
+                        "fileExtension": "btw",
+                    };
+                    g_GoogleDrive.insertFile(metadata, JSON.stringify(bookmark), function(resp) {
+                        if (!resp.error) {
+                            g_FolderTree.jstree.deselect_all();
+                            g_FolderTree.jstree.select_node(node);
+                        } else {
+                            JqUi.popupMessage("error", "Add link failed!");
+                            refreshRootFolder($("#pageSelect").value);
+                        }
+                    });
+                    // XXX
+                    // alert("title: " + bookmark.title + ", url: " + bookmark.url + ", des: " + bookmark.description);
+                    return true;
                });
             },
 
