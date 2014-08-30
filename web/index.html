@@ -17,8 +17,8 @@
     var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
     var SCOPES = "https://www.googleapis.com/auth/drive";
 
-    // var g_GoogleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-    var g_GoogleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    var g_GoogleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
+    // var g_GoogleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
     var g_FolderTree, contentTree;
 
     // js init
@@ -204,17 +204,24 @@
             var curToken = g_ContentTree.generateToken();
 
             g_GoogleDrive.getFiles(folderId, function(item) {
+
                 var node = {"id": item.id, "parent": "#", "text": item.title};
 
-                // append node type
                 if (item.mimeType == "application/vnd.google-apps.folder") {
                     node.type = TREE_NODE_TYPE_FOLDER;
+                    g_ContentTree.appendNode("#", node, curToken);
                 } else {
-                    node.type = TREE_NODE_TYPE_LINK;
-                    node.icon = item.iconLink;
-                }
+                    // get file content
+                    g_GoogleDrive.downloadFile(item, function(text) {
+                        var jsonObj = JSON.parse(text);
 
-                g_ContentTree.appendNode("#", node, curToken);
+                        node.type = TREE_NODE_TYPE_LINK;
+                        node.icon = item.iconLink;
+                        node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
+                        g_ContentTree.appendNode("#", node, curToken);
+                    });
+                }
+                
             });
     }
 
