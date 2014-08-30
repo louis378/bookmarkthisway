@@ -1,3 +1,7 @@
+// include jquery first then this library for escape html string
+
+const BTW_EXTENSION = ".btw";
+
 /**
  * Constructor.
  * google drive manager.
@@ -80,6 +84,8 @@ GoogleDrive.prototype.getFiles = function(id, callback) {
  * @param {Function} callback Function to call when the request is complete.
 */
 GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
+
+    // recursion
 	var retrievePageOfFiles = function(request, result) {
         request.execute(function(resp) {
             result = result.concat(resp.items);
@@ -94,8 +100,22 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
                     "q": params
                 });
                 retrieveAllFilesByPage(request, result);  // page recursive
-            } else {
+
+            } else {  // (base case)
                 result.forEach(function(item) {
+                    // manipulate with BTW_EXTENSION extension
+                    if (item.mimeType != "application/vnd.google-apps.folder") {
+                        var lastndex = item.title.lastIndexOf(BTW_EXTENSION);
+                        if (lastndex == -1) {
+                            return;
+                        }
+                        item.title = item.title.substring(0, lastndex);
+                    }
+
+                    // XXX escape html
+                    if (item.title) {
+                        item.title = $("<div/>").text(item.title).html();
+                    }
                 	callback(item);
                 });	
             }
@@ -108,7 +128,18 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
 /**
  * [renameFile description]
  * @param  {[type]}   fileId   [description]
- * @param  {[type]}   newTitle [description]
+ * @param  {String}   newTitle [description]
+ * @param  {Function} callback callback(file)
+ */
+GoogleDrive.prototype.renameLink = function(fileId, newTitle, callback) {
+    _newTitle = newTitle ? newTitle + BTW_EXTENSION : BTW_EXTENSION;  // append extension: ".btw"
+    this.rename(fileId, _newTitle, callback);
+}
+
+/**
+ * [renameFile description]
+ * @param  {[type]}   fileId   [description]
+ * @param  {String}   newTitle [description]
  * @param  {Function} callback callback(file)
  */
 GoogleDrive.prototype.rename = function(fileId, newTitle, callback) {
@@ -143,6 +174,71 @@ GoogleDrive.prototype.createFolder = function(parentId, title, callback) {
     request.execute(function(resp) {
         callback(resp);
     });
+}
+
+/** XXX
+ * [insertFile description]
+ * @param  {[type]}   title    [description]
+ * @param  {[type]}   content  [description]
+ * @param  {Function} callback [description]
+ */
+GoogleDrive.prototype.insertFile = function(metadata, content, callback) {
+    // manipulate with BTW_EXTENSION
+    metadata.title = metadata.title ? metadata.title + BTW_EXTENSION : BTW_EXTENSION;
+
+    const boundary = '-------314159265358979323846';
+    const delimiter = "\r\n--" + boundary + "\r\n";
+    const close_delim = "\r\n--" + boundary + "--";
+
+    var multipartRequestBody =
+        delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        'Content-Type: ' + metadata.mimeType + '\r\n' +
+        '\r\n' +
+        content +
+        close_delim;
+
+    var request = gapi.client.request({
+        'path': '/upload/drive/v2/files',
+        'method': 'POST',
+        'params': {'uploadType': 'multipart'},
+        'headers': {
+          'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+        },
+        'body': multipartRequestBody});
+    if (!callback) {
+      callback = function(file) {
+        console.log(file)
+      };
+    }
+    request.execute(callback);
+}
+
+/**
+ * Download a file's content.
+ *
+ * @param {File} file Drive File instance.
+ * @param {Function} callback Function to call when the request is complete.
+ *                            Format: callback(text); text is remote file content, if null means not  file or some error occur.
+ */
+GoogleDrive.prototype.downloadFile = function(file, callback) {
+    if (file.downloadUrl) {
+        var accessToken = gapi.auth.getToken().access_token;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', file.downloadUrl);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        xhr.onload = function() {
+            callback(xhr.responseText);
+        };
+        xhr.onerror = function() {
+            callback(null);
+        };
+        xhr.send();
+    } else {
+        callback(null);
+    }
 }
 
 /**

@@ -2,13 +2,14 @@
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<script type="text/javascript" src="./libs/google-drive.js"></script>
+
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-<script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
 
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
 <script type="text/javascript" src="./libs/tree.js"></script>
-<script type="text/javascript" src="./libs/google-drive.js"></script>
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
 <script type="text/javascript">
@@ -70,13 +71,37 @@
 
     /**
      * [createContextMenuCallback description]
-     * @return {[type]} [description]
+     * @return {Object} call back of context menu of tree.
      */
     function createContextMenuCallback() {
         return {
             // add link
             "addLink": function(node) {
-                alert("Add Link: " + node);
+               JqUi.popupBookmarkData(
+                {
+                    "window": {"title": "Add Link", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
+                },
+                function(bookmark) {
+                    var metadata = {
+                        "title": bookmark.title,
+                        "mimeType": "text/plain",
+                        "parents": [{"id": node.id}],
+                        "description": bookmark.description,
+                        "fileExtension": "btw",
+                    };
+                    g_GoogleDrive.insertFile(metadata, JSON.stringify(bookmark), function(resp) {
+                        if (!resp.error) {
+                            g_FolderTree.jstree.deselect_all();
+                            g_FolderTree.jstree.select_node(node);
+                        } else {
+                            JqUi.popupMessage("error", "Add link failed!");
+                            refreshRootFolder($("#pageSelect").value);
+                        }
+                    });
+                    // XXX
+                    // alert("title: " + bookmark.title + ", url: " + bookmark.url + ", des: " + bookmark.description);
+                    return true;
+               });
             },
 
             // add folder
@@ -127,8 +152,11 @@
                 var buttons = {
                     "Delete": function() {
                         trashFile();
+                        return true;
                     },
-                    "Cancel": function() {},
+                    "Cancel": function() {
+                        return true;
+                    },
                 };
                 JqUi.popupWithButtons("Delete Folder", "Are you sure delete this folder: " + node.text, buttons);
             }
@@ -178,17 +206,24 @@
             var curToken = g_ContentTree.generateToken();
 
             g_GoogleDrive.getFiles(folderId, function(item) {
+
                 var node = {"id": item.id, "parent": "#", "text": item.title};
 
-                // append node type
                 if (item.mimeType == "application/vnd.google-apps.folder") {
                     node.type = TREE_NODE_TYPE_FOLDER;
+                    g_ContentTree.appendNode("#", node, curToken);
                 } else {
-                    node.type = TREE_NODE_TYPE_LINK;
-                    node.icon = item.iconLink;
-                }
+                    // get file content
+                    g_GoogleDrive.downloadFile(item, function(text) {
+                        var jsonObj = JSON.parse(text);
 
-                g_ContentTree.appendNode("#", node, curToken);
+                        node.type = TREE_NODE_TYPE_LINK;
+                        node.icon = item.iconLink;
+                        node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
+                        g_ContentTree.appendNode("#", node, curToken);
+                    });
+                }
+                
             });
     }
 
@@ -238,7 +273,7 @@
 <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
 
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/le-frog/jquery-ui.css">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/redmond/jquery-ui.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 

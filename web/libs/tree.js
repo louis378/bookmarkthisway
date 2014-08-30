@@ -1,4 +1,3 @@
-
 const TREE_NODE_TYPE_ROOT_FOLDER = "rootFolder";
 const TREE_NODE_TYPE_FOLDER = "folder";
 const TREE_NODE_TYPE_LINK = "link";
