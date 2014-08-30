@@ -52,6 +52,49 @@ Tree.prototype.clear = function() {
 }
 
 /**
+ * Use ajax to set node icon by url(will auto to get favicon), if no favicon will do nothing.
+ * @param {String} nodeId  [description]
+ * @param {String} url web site url.
+ */
+Tree.prototype.setFavicon = function(nodeId, url) {
+    var protocol = $.url("protocol", url);
+    var hostname = $.url("hostname", url);
+    var port = $.url("port", url);
+    var favicoUrl = protocol + "://" + hostname + ":" + port + "/favicon.ico";
+    var curToken = this.token;
+    console.log(favicoUrl);
+
+    var _tree = this;
+    $('<img/>').attr("src", favicoUrl).load(function() {
+        $(this).remove(); // prevent memory leaks as @benweet suggested
+        
+        // tree change root(not current token)
+        if (!_tree.valid(curToken)) {
+            return;
+        }
+
+        // favicon exists
+        _tree.jstree.set_icon(_tree.jstree.get_node(nodeId), favicoUrl);
+    });
+
+
+    // $.ajax({
+    //     "url": url,
+    //     "type": "HEAD",
+    //     "crossDomain": true,
+    //     beforeSend: function(xhr){
+    //         xhr.setRequestHeader('Access-Control-Allow-origin', 'true');
+    //     },
+    //     error: function() {
+    //         //file not exists
+    //     },
+    //     success: function() {
+            
+    //     }
+    // });
+}
+
+/**
  * [generateToken description]
  * @return {[String]} new current tiken
  */

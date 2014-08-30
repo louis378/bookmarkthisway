@@ -7,9 +7,11 @@
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="./libs/url.min.js"></script> <!-- http://plugins.jquery.com/url/ -->
 
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
 <script type="text/javascript" src="./libs/tree.js"></script>
+
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
 <script type="text/javascript">
@@ -216,11 +218,12 @@
                     // get file content
                     g_GoogleDrive.downloadFile(item, function(text) {
                         var jsonObj = JSON.parse(text);
-
                         node.type = TREE_NODE_TYPE_LINK;
                         node.icon = item.iconLink;
                         node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
                         g_ContentTree.appendNode("#", node, curToken);
+
+                        g_ContentTree.setFavicon(node.id, jsonObj.url);
                     });
                 }
                 
