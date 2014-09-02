@@ -41,6 +41,7 @@ Tree.prototype.appendNode = function(parentId, node, token) {
     } else {
         parent = parentId;
     }
+    
     this.jstree.create_node(parent, node, "last");
 }
 

@@ -32,6 +32,10 @@
         $("#pageSelect").on("change", function (e) {
            mainApp.setRootFolder(this.value);
         });
+
+        // 
+        $("#folderTree").tooltip();
+        $("#contentTree").tooltip();
     });
 
     /**

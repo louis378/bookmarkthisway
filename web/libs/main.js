@@ -150,7 +150,6 @@ MainApp.prototype.createContentTree = function(domId) {
     result.$tree.bind("dblclick.jstree", function (event) {
         // var node = $(event.target).closest("li");
         var node = result.jstree.get_selected(true)[0];
-        console.log(node);  // XXX
 
         if (node.type === TREE_NODE_TYPE_FOLDER) {  // folder
             _mainApp.folderTree.jstree.deselect_all();
@@ -195,7 +194,6 @@ MainApp.prototype.setRootFolder = function(rootId) {
     this.googleDrive.getAllFoldersByRoot(rootId, function(item) {
         var parentId = item.parents[0].id;
         var node = _mainApp.getTreeNode(parentId, TREE_NODE_TYPE_FOLDER, item);
-        node.li_attr = {"title": item.title};
         _mainApp.folderTree.appendNode(parentId, node, curToken);
 
         _mainApp.folderTree.jstree.open_all();
@@ -242,14 +240,33 @@ MainApp.prototype.setContentTreeFolderId = function(folderId) {
  * @return {Object}           Tree node object.
  */
 MainApp.prototype.getTreeNode = function(parentId, type, driveItem, jsonObj) {
+    // node.data
     var nodeData = jsonObj ? jsonObj : {};
-    nodeData.iconLink = driveItem.iconLink;
 
+    // title for tooltip
+    var title = "";
+    if (jsonObj) {
+        title = jsonObj.description;
+    } else if (driveItem.title) {
+        title = driveItem.title;
+    }
+    
+    // some property will in node.original(ex: iconLink)
     return {
         "id": driveItem.id,
         "parent": parentId,
         "text": driveItem.title,
         "type": type,
-        "data": nodeData
+        "data": nodeData,
+
+        "iconLink": driveItem.iconLink,
+
+        "li_attr": {
+            "title": title,
+        },
+
+        "a_attr": {
+            
+        },
     };
 }
