@@ -12,6 +12,8 @@
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
 <script type="text/javascript" src="./libs/tree.js"></script>
 
+<script type="text/javascript" src="./libs/main.js"></script>
+
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
 <script type="text/javascript">
@@ -27,208 +29,14 @@
 
     // js init
     $(function() {
-        // trees
-        g_FolderTree = createFolderTree();
-        g_ContentTree = new ContentTree("contentTree");
+        var mainApp = new MainApp(g_GoogleDrive, "folderTree", "contentTree");
 
         // root folder select
+        $("#pageSelect").hide();
         $("#pageSelect").on("change", function (e) {
-           refreshRootFolder(this.value);
+           mainApp.setRootFolder(this.value);
         });
     });
-    
-    /**
-     * [createFolderTree description]
-     * @return {FolderTree} [description]
-     */
-    function createFolderTree() {
-        result = new FolderTree("folderTree", createContextMenuCallback());
-
-        // rename event
-        result.$tree.bind("rename_node.jstree", function(e, data) {
-            g_GoogleDrive.rename(data.node.id, data.text, function(resp) {
-                if (!resp.error) {
-
-                } else {  // drive rename failed
-                    JqUi.popupMessage("error", "Rename failed!");
-                    refreshRootFolder($("#pageSelect").value);
-                }
-            });
-        });
-
-        // select event
-        result.$tree.on("select_node.jstree", function (e, data) {
-            refreshContentTree(data.node.id);
-        });
-
-        // deselect event
-        result.$tree.on("deselect_all.jstree", function (e, data) {
-            if (g_ContentTree) {
-                g_ContentTree.clear();
-            }
-        });
-
-        return result;
-    }
-
-    /**
-     * [createContextMenuCallback description]
-     * @return {Object} call back of context menu of tree.
-     */
-    function createContextMenuCallback() {
-        return {
-            // add link
-            "addLink": function(node) {
-               JqUi.popupBookmarkData(
-                {
-                    "window": {"title": "Add Link", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
-                },
-                function(bookmark) {
-                    var metadata = {
-                        "title": bookmark.title,
-                        "mimeType": "text/plain",
-                        "parents": [{"id": node.id}],
-                        "description": bookmark.description,
-                        "fileExtension": "btw",
-                    };
-                    g_GoogleDrive.insertFile(metadata, JSON.stringify(bookmark), function(resp) {
-                        if (!resp.error) {
-                            g_FolderTree.jstree.deselect_all();
-                            g_FolderTree.jstree.select_node(node);
-                        } else {
-                            JqUi.popupMessage("error", "Add link failed!");
-                            refreshRootFolder($("#pageSelect").value);
-                        }
-                    });
-                    // XXX
-                    // alert("title: " + bookmark.title + ", url: " + bookmark.url + ", des: " + bookmark.description);
-                    return true;
-               });
-            },
-
-            // add folder
-            "addFolder": function(node) {
-                g_GoogleDrive.createFolder(node.id, "New Folder", function(resp) {
-                    if (!resp.error) {
-                        var token = g_FolderTree.token;
-                        var newFolder = {
-                            "id": resp.id,
-                            "text": resp.title,
-                            "type": TREE_NODE_TYPE_FOLDER,
-                        };
-
-                        g_FolderTree.appendNode(node.id, newFolder, token);  // append to folder tree
-
-                        g_FolderTree.jstree.deselect_all();
-                        g_FolderTree.jstree.select_node(newFolder);
-
-                        g_FolderTree.jstree.edit(newFolder.id);  // edit(rename)
-
-                    } else {  // drive rename failed
-                        JqUi.popupMessage("error", "Add new folder failed!");
-                        refreshRootFolder($("#pageSelect").value);
-                    }
-                });
-            },
-
-            // rename folder
-            "renameFolder": function(node) {
-                g_FolderTree.jstree.edit(node.id);
-            },
-
-            // delete folder
-            "deleteFolder": function(node) {
-                var trashFile = function() {
-                    g_GoogleDrive.trashFile(node.id, function(resp) {
-                        if (!resp.error) {
-                            g_FolderTree.jstree.delete_node(node);
-                            g_FolderTree.jstree.deselect_all();
-
-                        } else {  // drive rename failed
-                            JqUi.popupMessage("error", "Rename failed!");
-                            refreshRootFolder($("#pageSelect").value);
-                        }
-                    });
-                }
-
-                var buttons = {
-                    "Delete": function() {
-                        trashFile();
-                        return true;
-                    },
-                    "Cancel": function() {
-                        return true;
-                    },
-                };
-                JqUi.popupWithButtons("Delete Folder", "Are you sure delete this folder: " + node.text, buttons);
-            }
-        };
-    }
-
-    /**
-     * [changeRootFolder description]
-     * @param  {String} rootId root ID form google drive folder.
-     */
-    function refreshRootFolder(rootId) {
-         // clear all node
-        g_FolderTree.clear();
-        g_ContentTree.clear();
-        g_ContentTree.generateToken();  // prevrnt old tree UI mainpulate
-        var curToken = g_FolderTree.generateToken();
-
-        // append root node
-        var rootText = $(this).find("option:selected").text();
-        var rootNode = {"id": rootId, "parent": "#", "text": rootText, "type": TREE_NODE_TYPE_ROOT_FOLDER};
-        g_FolderTree.appendNode("#", rootNode, curToken);
-        g_FolderTree.jstree.select_node(rootNode);
-
-        // append children node
-        g_GoogleDrive.getAllFoldersByRoot(rootId, function(item) {
-            var parentId = item.parents[0].id;
-            var node = {
-                "id": item.id,
-                "parent": parentId,
-                "text": item.title,
-                "li_attr": {
-                    "title": item.title
-                },
-                "type": TREE_NODE_TYPE_FOLDER
-            };
-            g_FolderTree.appendNode(parentId, node, curToken);
-            g_FolderTree.jstree.open_all();
-        });
-    }
-
-    /**
-     * [refreshContentTree description]
-     * @param  {[String]} folderId form google drive folder ID.
-     */
-    function refreshContentTree(folderId) {
-        g_ContentTree.clear();
-            var curToken = g_ContentTree.generateToken();
-
-            g_GoogleDrive.getFiles(folderId, function(item) {
-
-                var node = {"id": item.id, "parent": "#", "text": item.title};
-
-                if (item.mimeType == "application/vnd.google-apps.folder") {
-                    node.type = TREE_NODE_TYPE_FOLDER;
-                    g_ContentTree.appendNode("#", node, curToken);
-                } else {
-                    // get file content
-                    g_GoogleDrive.downloadFile(item, function(text) {
-                        var jsonObj = JSON.parse(text);
-                        node.type = TREE_NODE_TYPE_LINK;
-                        node.icon = item.iconLink;
-                        node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
-                        g_ContentTree.appendNode("#", node, curToken);
-
-                        g_ContentTree.setFavicon(node.id, jsonObj.url);
-                    });
-                }
-                
-            });
-    }
 
     /**
      * Called when the client library is loaded to start the auth flow.
@@ -268,7 +76,8 @@
         // Access token has been successfully retrieved, requests can be sent to the API.
         g_GoogleDrive.getRootFolders(function(item) {
             $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
-        }); 
+        });
+        $("#pageSelect").show();
     }  
 
 </script>
