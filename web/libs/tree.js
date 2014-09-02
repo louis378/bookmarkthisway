@@ -62,7 +62,6 @@ Tree.prototype.setFavicon = function(nodeId, url) {
     var port = $.url("port", url);
     var favicoUrl = protocol + "://" + hostname + ":" + port + "/favicon.ico";
     var curToken = this.token;
-    console.log(favicoUrl);
 
     var _tree = this;
     $('<img/>').attr("src", favicoUrl).load(function() {
@@ -77,21 +76,6 @@ Tree.prototype.setFavicon = function(nodeId, url) {
         _tree.jstree.set_icon(_tree.jstree.get_node(nodeId), favicoUrl);
     });
 
-
-    // $.ajax({
-    //     "url": url,
-    //     "type": "HEAD",
-    //     "crossDomain": true,
-    //     beforeSend: function(xhr){
-    //         xhr.setRequestHeader('Access-Control-Allow-origin', 'true');
-    //     },
-    //     error: function() {
-    //         //file not exists
-    //     },
-    //     success: function() {
-            
-    //     }
-    // });
 }
 
 /**
