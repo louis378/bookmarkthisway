@@ -191,12 +191,13 @@ MainApp.prototype.setContentTreeFolderId = function(folderId) {
         } else {
             // get file content
             _mainApp.googleDrive.downloadFile(item, function(text) {
-            var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_LINK, item, JSON.parse(text));
-            node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
-            _mainApp.contentTree.appendNode("#", node, curToken);
+                var jsonObj = JSON.parse(text);
+                var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_LINK, item, jsonObj);
+                node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
+                _mainApp.contentTree.appendNode("#", node, curToken);
 
-            // set icon sync
-            _mainApp.contentTree.setFavicon(node.id, jsonObj.url);
+                // set icon sync
+                _mainApp.contentTree.setFavicon(node.id, jsonObj.url);
             });
         }
         
