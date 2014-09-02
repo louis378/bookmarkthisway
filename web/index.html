@@ -17,12 +17,11 @@
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
 <script type="text/javascript">
-    var CLIENT_ID = "460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com";
-    var TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
-    var SCOPES = "https://www.googleapis.com/auth/drive";
+    const CLIENT_ID = "460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com";
+    const SCOPES = "https://www.googleapis.com/auth/drive";
 
-    var g_GoogleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-    // var g_GoogleDrive = new GoogleDrive(TEST_CLIENT_ID, SCOPES);
+    const g_GoogleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
+    
 
     // js init
     $(function() {
@@ -51,7 +50,6 @@
 
     /**
      * [handleClientLoadFailed description]
-     * @return {[type]} [description]
      */
     function handleClientLoadFailed() {
         g_GoogleDrive.onAuthFail = function() {

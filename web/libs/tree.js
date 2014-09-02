@@ -259,12 +259,5 @@ function ContentTree(domId) {
     jstree = $("#" + domId).jstree(config);
     var result = new Tree(domId, jstree);
 
-    // double click
-    jstree.bind("dblclick.jstree", function (event) {
-        var node = $(event.target).closest("li");
-        var data = node.data(domId);
-        console.log(result.jstree.get_selected(true)[0]);
-    });
-
     return result;
 }

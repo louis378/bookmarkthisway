@@ -8,7 +8,7 @@ function MainApp(googleDrive, folderTreeDomId, contentTreeDomId) {
 	this.contentTreeFolderId = "";
 
 	this.folderTree = this.createFolderTree(folderTreeDomId);
-	this.contentTree = new ContentTree(contentTreeDomId);
+	this.contentTree = this.createContentTree(contentTreeDomId);
 }
 
  /**
@@ -16,7 +16,7 @@ function MainApp(googleDrive, folderTreeDomId, contentTreeDomId) {
  * @return {FolderTree} [description]
  */
 MainApp.prototype.createFolderTree = function(domId) {
-    result = new FolderTree(domId, this.createContextMenuCallback());
+    var result = new FolderTree(domId, this.createContextMenuCallback());
     var _mainApp = this;
 
     // rename event
@@ -136,6 +136,35 @@ MainApp.prototype.createContextMenuCallback = function() {
             JqUi.popupWithButtons("Delete Folder", "Are you sure delete this folder: " + node.text, buttons);
         }
     };
+}
+
+/**
+ * [createContentTree description]
+ * @return {ContentTree} [description]
+ */
+MainApp.prototype.createContentTree = function(domId) {
+    var result = new ContentTree(domId);
+    var _mainApp = this;
+
+    // double click
+    result.$tree.bind("dblclick.jstree", function (event) {
+        // var node = $(event.target).closest("li");
+        var node = result.jstree.get_selected(true)[0];
+        console.log(node);  // XXX
+
+        if (node.type === TREE_NODE_TYPE_FOLDER) {  // folder
+            _mainApp.folderTree.jstree.deselect_all();
+            _mainApp.folderTree.jstree.select_node(node);
+
+        } else if (node.type === TREE_NODE_TYPE_LINK) {  // link
+            window.open(node.data.url, "_blank");
+
+        } else {
+            // do nothing
+        }
+    });
+
+    return result;
 }
 
 /**
