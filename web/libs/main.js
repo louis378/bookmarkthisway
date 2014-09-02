@@ -89,12 +89,7 @@ MainApp.prototype.createContextMenuCallback = function() {
             _mainApp.googleDrive.createFolder(node.id, "New Folder", function(resp) {
                 if (!resp.error) {
                     var token = _mainApp.folderTree.token;
-                    var newFolder = {
-                        "id": resp.id,
-                        "text": resp.title,
-                        "type": TREE_NODE_TYPE_FOLDER,
-                    };
-
+                    var newFolder = _mainApp.getTreeNode(node.id, TREE_NODE_TYPE_FOLDER, resp);
                     _mainApp.folderTree.appendNode(node.id, newFolder, token);  // append to folder tree
 
                     _mainApp.folderTree.jstree.deselect_all();
@@ -170,16 +165,10 @@ MainApp.prototype.setRootFolder = function(rootId) {
     var _mainApp = this;
     this.googleDrive.getAllFoldersByRoot(rootId, function(item) {
         var parentId = item.parents[0].id;
-        var node = {
-            "id": item.id,
-            "parent": parentId,
-            "text": item.title,
-            "li_attr": {
-                "title": item.title
-            },
-            "type": TREE_NODE_TYPE_FOLDER
-        };
+        var node = _mainApp.getTreeNode(parentId, TREE_NODE_TYPE_FOLDER, item);
+        node.li_attr = {"title": item.title};
         _mainApp.folderTree.appendNode(parentId, node, curToken);
+
         _mainApp.folderTree.jstree.open_all();
     });
 }
@@ -195,23 +184,42 @@ MainApp.prototype.setContentTreeFolderId = function(folderId) {
 
     var _mainApp = this;
     this.googleDrive.getFiles(folderId, function(item) {
-        var node = {"id": item.id, "parent": "#", "text": item.title};
 
         if (item.mimeType == "application/vnd.google-apps.folder") {
-            node.type = TREE_NODE_TYPE_FOLDER;
+            var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_FOLDER, item);
             _mainApp.contentTree.appendNode("#", node, curToken);
         } else {
             // get file content
             _mainApp.googleDrive.downloadFile(item, function(text) {
-                var jsonObj = JSON.parse(text);
-                node.type = TREE_NODE_TYPE_LINK;
-                node.icon = item.iconLink;
-                node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
-                _mainApp.contentTree.appendNode("#", node, curToken);
+            var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_LINK, item, JSON.parse(text));
+            node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
+            _mainApp.contentTree.appendNode("#", node, curToken);
 
-                _mainApp.contentTree.setFavicon(node.id, jsonObj.url);
+            // set icon sync
+            _mainApp.contentTree.setFavicon(node.id, jsonObj.url);
             });
         }
         
     });
+}
+
+/**
+ * [getTreeNode description]
+ * @param  {String} parentId  parent's ID
+ * @param  {String} type      tree node type
+ * @param  {Object} driveItem google drive item
+ * @param  {Object} jsonObj   (optional)link json object.
+ * @return {Object}           Tree node object.
+ */
+MainApp.prototype.getTreeNode = function(parentId, type, driveItem, jsonObj) {
+    var nodeData = jsonObj ? jsonObj : {};
+    nodeData.iconLink = driveItem.iconLink;
+
+    return {
+        "id": driveItem.id,
+        "parent": parentId,
+        "text": driveItem.title,
+        "type": type,
+        "data": nodeData
+    };
 }
