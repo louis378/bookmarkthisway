@@ -1,14 +1,14 @@
 
 function MainApp(googleDrive, folderTreeDomId, contentTreeDomId) {
-	this.googleDrive = googleDrive;
-	this.folderTreeDomId = folderTreeDomId;
-	this.contentTreeDomId = contentTreeDomId;
+    this.googleDrive = googleDrive;
+    this.folderTreeDomId = folderTreeDomId;
+    this.contentTreeDomId = contentTreeDomId;
 
-	this.rootFolderId = "";
-	this.contentTreeFolderId = "";
+    this.rootFolderId = "";
+    this.contentTreeFolderId = "";
 
-	this.folderTree = this.createFolderTree(folderTreeDomId);
-	this.contentTree = new ContentTree(contentTreeDomId);
+    this.folderTree = this.createFolderTree(folderTreeDomId);
+    this.contentTree = this.createContentTree(contentTreeDomId);
 }
 
  /**
@@ -16,7 +16,7 @@ function MainApp(googleDrive, folderTreeDomId, contentTreeDomId) {
  * @return {FolderTree} [description]
  */
 MainApp.prototype.createFolderTree = function(domId) {
-    result = new FolderTree(domId, this.createContextMenuCallback());
+    var result = new FolderTree(domId, this.createContextMenuCallback());
     var _mainApp = this;
 
     // rename event
@@ -33,9 +33,9 @@ MainApp.prototype.createFolderTree = function(domId) {
 
     // select event
     result.$tree.on("select_node.jstree", function (e, data) {
-    	if (_mainApp.contentTree) {
-    		_mainApp.setContentTreeFolderId(data.node.id);
-    	}
+        if (_mainApp.contentTree) {
+            _mainApp.setContentTreeFolderId(data.node.id);
+        }
     });
 
     // deselect event
@@ -53,7 +53,7 @@ MainApp.prototype.createFolderTree = function(domId) {
  * @return {Object} call back of context menu of tree.
  */
 MainApp.prototype.createContextMenuCallback = function() {
-	var _mainApp = this;
+    var _mainApp = this;
 
     return {
         // add link
@@ -89,12 +89,7 @@ MainApp.prototype.createContextMenuCallback = function() {
             _mainApp.googleDrive.createFolder(node.id, "New Folder", function(resp) {
                 if (!resp.error) {
                     var token = _mainApp.folderTree.token;
-                    var newFolder = {
-                        "id": resp.id,
-                        "text": resp.title,
-                        "type": TREE_NODE_TYPE_FOLDER,
-                    };
-
+                    var newFolder = _mainApp.getTreeNode(node.id, TREE_NODE_TYPE_FOLDER, resp);
                     _mainApp.folderTree.appendNode(node.id, newFolder, token);  // append to folder tree
 
                     _mainApp.folderTree.jstree.deselect_all();
@@ -144,17 +139,45 @@ MainApp.prototype.createContextMenuCallback = function() {
 }
 
 /**
+ * [createContentTree description]
+ * @return {ContentTree} [description]
+ */
+MainApp.prototype.createContentTree = function(domId) {
+    var result = new ContentTree(domId);
+    var _mainApp = this;
+
+    // double click
+    result.$tree.bind("dblclick.jstree", function (event) {
+        // var node = $(event.target).closest("li");
+        var node = result.jstree.get_selected(true)[0];
+
+        if (node.type === TREE_NODE_TYPE_FOLDER) {  // folder
+            _mainApp.folderTree.jstree.deselect_all();
+            _mainApp.folderTree.jstree.select_node(node);
+
+        } else if (node.type === TREE_NODE_TYPE_LINK) {  // link
+            window.open(node.data.url, "_blank");
+
+        } else {
+            // do nothing
+        }
+    });
+
+    return result;
+}
+
+/**
  * If rootId is null or empty will clear folderTree and contentTree and finish.
  * @param  {String} rootId root ID form google drive folder.
  */
 MainApp.prototype.setRootFolder = function(rootId) {
-	this.rootFolderId = rootId;
-	this.folderTree.clear();
+    this.rootFolderId = rootId;
+    this.folderTree.clear();
     this.contentTree.clear();
 
-	if (!rootId) {
-		return;
-	} 
+    if (!rootId) {
+        return;
+    } 
 
      // clear all node
     this.contentTree.generateToken();  // prevrnt old tree UI mainpulate
@@ -170,16 +193,9 @@ MainApp.prototype.setRootFolder = function(rootId) {
     var _mainApp = this;
     this.googleDrive.getAllFoldersByRoot(rootId, function(item) {
         var parentId = item.parents[0].id;
-        var node = {
-            "id": item.id,
-            "parent": parentId,
-            "text": item.title,
-            "li_attr": {
-                "title": item.title
-            },
-            "type": TREE_NODE_TYPE_FOLDER
-        };
+        var node = _mainApp.getTreeNode(parentId, TREE_NODE_TYPE_FOLDER, item);
         _mainApp.folderTree.appendNode(parentId, node, curToken);
+
         _mainApp.folderTree.jstree.open_all();
     });
 }
@@ -189,29 +205,68 @@ MainApp.prototype.setRootFolder = function(rootId) {
  * @param  {[String]} folderId form google drive folder ID.
  */
 MainApp.prototype.setContentTreeFolderId = function(folderId) {
-	this.contentTreeFolderId = folderId;
+    this.contentTreeFolderId = folderId;
     this.contentTree.clear();
     var curToken = this.contentTree.generateToken();
 
     var _mainApp = this;
     this.googleDrive.getFiles(folderId, function(item) {
-        var node = {"id": item.id, "parent": "#", "text": item.title};
 
         if (item.mimeType == "application/vnd.google-apps.folder") {
-            node.type = TREE_NODE_TYPE_FOLDER;
+            var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_FOLDER, item);
             _mainApp.contentTree.appendNode("#", node, curToken);
         } else {
             // get file content
             _mainApp.googleDrive.downloadFile(item, function(text) {
                 var jsonObj = JSON.parse(text);
-                node.type = TREE_NODE_TYPE_LINK;
-                node.icon = item.iconLink;
+                var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_LINK, item, jsonObj);
                 node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
                 _mainApp.contentTree.appendNode("#", node, curToken);
 
+                // set icon sync
                 _mainApp.contentTree.setFavicon(node.id, jsonObj.url);
             });
         }
         
     });
+}
+
+/**
+ * [getTreeNode description]
+ * @param  {String} parentId  parent's ID
+ * @param  {String} type      tree node type
+ * @param  {Object} driveItem google drive item
+ * @param  {Object} jsonObj   (optional)link json object.
+ * @return {Object}           Tree node object.
+ */
+MainApp.prototype.getTreeNode = function(parentId, type, driveItem, jsonObj) {
+    // node.data
+    var nodeData = jsonObj ? jsonObj : {};
+
+    // title for tooltip
+    var title = "";
+    if (jsonObj) {
+        title = jsonObj.description;
+    } else if (driveItem.title) {
+        title = driveItem.title;
+    }
+    
+    // some property will in node.original(ex: iconLink)
+    return {
+        "id": driveItem.id,
+        "parent": parentId,
+        "text": driveItem.title,
+        "type": type,
+        "data": nodeData,
+
+        "iconLink": driveItem.iconLink,
+
+        "li_attr": {
+            "title": title,
+        },
+
+        "a_attr": {
+            
+        },
+    };
 }

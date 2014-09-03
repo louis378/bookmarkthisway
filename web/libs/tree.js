@@ -41,6 +41,7 @@ Tree.prototype.appendNode = function(parentId, node, token) {
     } else {
         parent = parentId;
     }
+    
     this.jstree.create_node(parent, node, "last");
 }
 
@@ -109,7 +110,7 @@ Tree.prototype.valid = function(token) {
  * @param {[type]} domId [description]
  */
 function FolderTree(domId, contextmenuCallBack) {
-    jstree = $("#" + domId).jstree({
+    var config = {
         "core": {
             "check_callback": true,
             "multiple": false,
@@ -119,8 +120,6 @@ function FolderTree(domId, contextmenuCallBack) {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
             "types": {
                     "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
-                    TREE_NODE_TYPE_ROOT_FOLDER: {"icon": "jstree-folder"},
-                    TREE_NODE_TYPE_FOLDER: {"icon": "glyphicon  glyphicon-link"},
             }
         },
 
@@ -169,7 +168,13 @@ function FolderTree(domId, contextmenuCallBack) {
             }
 
         }
-    });
+    };
+    // types
+    config.types[TREE_NODE_TYPE_ROOT_FOLDER] = {"icon": "glyphicon glyphicon-book"};
+    config.types[TREE_NODE_TYPE_FOLDER] = {"icon": "glyphicon glyphicon-folder-open"};
+
+    // instance
+    jstree = $("#" + domId).jstree(config);
     var tree = new Tree(domId, jstree);
 
     // keydown
@@ -236,7 +241,7 @@ function folderTreeCustomMenu(node) {
  * @param {[type]} domId [description]
  */
 function ContentTree(domId) {
-    jstree = $("#" + domId).jstree({
+    var config = {
         "plugins": ["themes", "json_data", "types"], 
      
         "core": {
@@ -245,10 +250,15 @@ function ContentTree(domId) {
         },
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_LINK],
-            TREE_NODE_TYPE_FOLDER: {"icon": "jstree-folder"},
-            TREE_NODE_TYPE_LINK: {"valid_children": [], "icon": "jstree-file"},
         },
-    });
+    };
+    // types
+    config.types[TREE_NODE_TYPE_FOLDER] = {"icon": "glyphicon glyphicon-folder-open"};
+    config.types[TREE_NODE_TYPE_LINK] = {"valid_children": [], "icon": "glyphicon glyphicon-link"};
 
-    return new Tree(domId, jstree);
+    // instance
+    jstree = $("#" + domId).jstree(config);
+    var result = new Tree(domId, jstree);
+
+    return result;
 }
