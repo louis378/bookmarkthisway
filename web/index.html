@@ -16,19 +16,14 @@
 
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
+<script type="text/javascript" src="./libs/drive-api-key.js"></script>
 <script type="text/javascript">
-    const CLIENT_ID = "460606321746-60eoev9jsf2pqp1t37otikutqcleudmb.apps.googleusercontent.com";
-    const BLACKTEA_TEST_CLIENT_ID = "460606321746-6vebbhq1ouilldot0j5khk9cinkua6cp.apps.googleusercontent.com";
-    const LOUIS_TEST_CLIENT_ID = "617685598048-dqe1q3ubduspk2pk2i3ds2gepsjj3qgm.apps.googleusercontent.com";
     const SCOPES = "https://www.googleapis.com/auth/drive";
-
-    const g_GoogleDrive = new GoogleDrive(CLIENT_ID, SCOPES);
-    // const g_GoogleDrive = new GoogleDrive(BLACKTEA_TEST_CLIENT_ID, SCOPES);
-    // const g_GoogleDrive = new GoogleDrive(LOUIS_TEST_CLIENT_ID, SCOPES);
+    const g_GoogleDrive = new GoogleDrive(DRIVE_CLIENT_ID, SCOPES);
 
     // js init
     $(function() {
-        var mainApp = new MainApp(g_GoogleDrive, "folderTree", "contentTree");
+        const mainApp = new MainApp(g_GoogleDrive, "folderTree", "contentTree");
 
         // root folder select
         $("#pageSelect").hide();
