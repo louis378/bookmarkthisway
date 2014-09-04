@@ -58,10 +58,7 @@ Tree.prototype.clear = function() {
  * @param {String} url web site url.
  */
 Tree.prototype.setFavicon = function(nodeId, url) {
-    var protocol = $.url("protocol", url);
-    var hostname = $.url("hostname", url);
-    var port = $.url("port", url);
-    var favicoUrl = protocol + "://" + hostname + ":" + port + "/favicon.ico";
+    var favicoUrl = "http://www.google.com/s2/favicons?domain=" + url;
     var curToken = this.token;
 
     var _tree = this;
