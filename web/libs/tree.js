@@ -10,9 +10,6 @@ function Tree(domId, domJstree) {
 
 	this.id = domId;
 
-	// js tree
-   
-
     // jquery object
     this.$tree = domJstree;
 
@@ -115,9 +112,6 @@ function FolderTree(domId, contextmenuCallBack) {
 
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
-            "types": {
-                    "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
-            }
         },
 
         "plugins": ["contextmenu", "themes", "json_data", "types"],
@@ -125,20 +119,6 @@ function FolderTree(domId, contextmenuCallBack) {
         "contextmenu": {
             "items": function(node) {
                 var items = {
-                    "addLink": {
-                        "label": "Add Link",
-                        "icon": "glyphicon  glyphicon-link",
-                        "action": function() {
-                            contextmenuCallBack.addLink(node);
-                        }
-                    },
-                    "addFolder": {
-                        "label": "Add Folder",
-                        "icon": "glyphicon  glyphicon-folder-open",
-                        "action": function() {
-                            contextmenuCallBack.addFolder(node);
-                        }
-                    },
                     "renameFolder": {
                         "label": "Rename",
                         "icon": "glyphicon  glyphicon-pencil",
@@ -153,9 +133,24 @@ function FolderTree(domId, contextmenuCallBack) {
                             contextmenuCallBack.deleteFolder(node);
                         }    
                     },
+                    "addLink": {
+                        "separator_before": true,
+                        "label": "Add Link",
+                        "icon": "glyphicon  glyphicon-link",
+                        "action": function() {
+                            contextmenuCallBack.addLink(node);
+                        }
+                    },
+                    "addFolder": {
+                        "label": "Add Folder",
+                        "icon": "glyphicon  glyphicon-folder-open",
+                        "action": function() {
+                            contextmenuCallBack.addFolder(node);
+                        }
+                    },
                 };
 
-                if(this.get_type(node) === TREE_NODE_TYPE_ROOT_FOLDER) {
+                if (this.get_type(node) === TREE_NODE_TYPE_ROOT_FOLDER) {
                     delete items.renameFolder;
                     delete items.deleteFolder;
                 }
@@ -237,14 +232,63 @@ function folderTreeCustomMenu(node) {
  * [ContentTree description]
  * @param {[type]} domId [description]
  */
-function ContentTree(domId) {
+function ContentTree(domId, contextmenuCallBack) {
     var config = {
-        "plugins": ["themes", "json_data", "types"], 
+        "plugins": ["contextmenu", "themes", "json_data", "types"], 
      
         "core": {
             "check_callback": true,
             "multiple": false,
         },
+
+        "contextmenu": {
+            "items": function(node) {
+                var items = {
+                    "renameFolder": {
+                        "label": "Rename",
+                        "icon": "glyphicon  glyphicon-pencil",
+                        "action": function() {
+                            // contextmenuCallBack.renameFolder(node);  XXX
+                        } 
+                    },
+                     "deleteFolder": {
+                        "label": "Delete",
+                        "icon": "glyphicon  glyphicon-trash",
+                        "action": function() {
+                            // contextmenuCallBack.deleteFolder(node);  XXX
+                        }    
+                    },
+                    "addLink": {
+                        "separator_before": true,
+                        "label": "Add Link",
+                        "icon": "glyphicon  glyphicon-link",
+                        "action": function() {
+                            // contextmenuCallBack.addLink(node);  XXX
+                        }
+                    },
+                    "addFolder": {
+                        "label": "Add Folder",
+                        "icon": "glyphicon  glyphicon-folder-open",
+                        "action": function() {
+                            // contextmenuCallBack.addFolder(node);  XXX
+                        }
+                    },
+                };
+
+                if (this.get_type(node) === TREE_NODE_TYPE_FOLDER) {
+                    
+                } else if (this.get_type(node) === TREE_NODE_TYPE_LINK) {
+                    delete items.renameFolder;
+                    delete items.deleteFolder;
+                }
+
+
+                return items;
+            }
+
+        },
+
+        // types
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_LINK],
         },
