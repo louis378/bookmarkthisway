@@ -39,6 +39,7 @@ Tree.prototype.appendNode = function(parentId, node, token) {
         parent = parentId;
     }
     
+    var _tree = this;
     this.jstree.create_node(parent, node, "last");
 }
 
@@ -109,6 +110,7 @@ function FolderTree(domId, contextmenuCallBack) {
             "check_callback": true,
             "multiple": false,
         },
+
 
         "types": {
             "valid_children": [TREE_NODE_TYPE_FOLDER, TREE_NODE_TYPE_ROOT_FOLDER],
@@ -248,7 +250,7 @@ function ContentTree(domId, contextmenuCallBack) {
                         "label": "Rename",
                         "icon": "glyphicon  glyphicon-pencil",
                         "action": function() {
-                            // contextmenuCallBack.renameFolder(node);  XXX
+                            contextmenuCallBack.renameFolder(node);
                         } 
                     },
                      "deleteFolder": {
@@ -270,6 +272,7 @@ function ContentTree(domId, contextmenuCallBack) {
                         "label": "Add Folder",
                         "icon": "glyphicon  glyphicon-folder-open",
                         "action": function() {
+                            console.log(node);
                             // contextmenuCallBack.addFolder(node);  XXX
                         }
                     },

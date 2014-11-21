@@ -16,7 +16,7 @@ function MainApp(googleDrive, folderTreeDomId, contentTreeDomId) {
  * @return {FolderTree} [description]
  */
 MainApp.prototype.createFolderTree = function(domId) {
-    var result = new FolderTree(domId, this.createContextMenuCallback());
+    var result = new FolderTree(domId, this.createFolderTreeContextMenuCallback());
     var _mainApp = this;
 
     // rename event
@@ -52,7 +52,7 @@ MainApp.prototype.createFolderTree = function(domId) {
  * [createContextMenuCallback description]
  * @return {Object} call back of context menu of tree.
  */
-MainApp.prototype.createContextMenuCallback = function() {
+MainApp.prototype.createFolderTreeContextMenuCallback = function() {
     var _mainApp = this;
 
     return {
@@ -143,7 +143,7 @@ MainApp.prototype.createContextMenuCallback = function() {
  * @return {ContentTree} [description]
  */
 MainApp.prototype.createContentTree = function(domId) {
-    var result = new ContentTree(domId);
+    var result = new ContentTree(domId, this.createContentTreeContextMenuCallback());
     var _mainApp = this;
 
     // double click
@@ -164,6 +164,96 @@ MainApp.prototype.createContentTree = function(domId) {
     });
 
     return result;
+}
+
+/**
+ * [createContentTreeContextMenuCallback description]
+ * @return {[type]} [description]
+ */
+MainApp.prototype.createContentTreeContextMenuCallback = function() {
+    var _mainApp = this;
+
+    return {
+        // add link
+        "addLink": function(node) {
+           JqUi.popupBookmarkData(
+            {
+                "window": {"title": "Add Link", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
+            },
+            function(bookmark) {
+                var metadata = {
+                    "title": bookmark.title,
+                    "mimeType": "text/plain",
+                    "parents": [{"id": node.id}],
+                    "description": bookmark.description,
+                    "fileExtension": "btw",
+                };
+                _mainApp.googleDrive.insertFile(metadata, JSON.stringify(bookmark), function(resp) {
+                    if (!resp.error) {
+                        _mainApp.folderTree.jstree.deselect_all();
+                        _mainApp.folderTree.jstree.select_node(node);
+                    } else {
+                        JqUi.popupMessage("error", "Add link failed!");
+                        _mainApp.setRootFolder(this.rootFolderId);
+                    }
+                });
+
+                return true;
+           });
+        },
+
+        // add folder
+        "addFolder": function(node) {
+            _mainApp.googleDrive.createFolder(node.id, "New Folder", function(resp) {
+                if (!resp.error) {
+                    var token = _mainApp.folderTree.token;
+                    var newFolder = _mainApp.getTreeNode(node.id, TREE_NODE_TYPE_FOLDER, resp);
+                    _mainApp.folderTree.appendNode(node.id, newFolder, token);  // append to folder tree
+
+                    _mainApp.folderTree.jstree.deselect_all();
+                    _mainApp.folderTree.jstree.select_node(newFolder);
+
+                    _mainApp.folderTree.jstree.edit(newFolder.id);  // edit(rename)
+
+                } else {  // drive rename failed
+                    JqUi.popupMessage("error", "Add new folder failed!");
+                    refreshRootFolder(_mainApp.rootFolderId);
+                }
+            });
+        },
+
+        // rename folder
+        "renameFolder": function(node) {
+            _mainApp.folderTree.jstree.edit(node.id);
+        },
+
+        // delete folder
+        "deleteFolder": function(node) {
+            var trashFile = function() {
+                _mainApp.googleDrive.trashFile(node.id, function(resp) {
+                    if (!resp.error) {
+                        _mainApp.folderTree.jstree.delete_node(node);
+                        _mainApp.folderTree.jstree.deselect_all();
+
+                    } else {  // drive rename failed
+                        JqUi.popupMessage("error", "Rename failed!");
+                        _mainApp.setRootFolder($("#pageSelect").value);
+                    }
+                });
+            }
+
+            var buttons = {
+                "Delete": function() {
+                    trashFile();
+                    return true;
+                },
+                "Cancel": function() {
+                    return true;
+                },
+            };
+            JqUi.popupWithButtons("Delete Folder", "Are you sure delete this folder: " + node.text, buttons);
+        }
+    };
 }
 
 /**
@@ -213,13 +303,13 @@ MainApp.prototype.setContentTreeFolderId = function(folderId) {
     this.googleDrive.getFiles(folderId, function(item) {
 
         if (item.mimeType == "application/vnd.google-apps.folder") {
-            var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_FOLDER, item);
+            var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_FOLDER, item, null, folderId);
             _mainApp.contentTree.appendNode("#", node, curToken);
         } else {
             // get file content
             _mainApp.googleDrive.downloadFile(item, function(text) {
                 var jsonObj = JSON.parse(text);
-                var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_LINK, item, jsonObj);
+                var node = _mainApp.getTreeNode("#", TREE_NODE_TYPE_LINK, item, jsonObj, folderId);
                 node.text = "<a href='" + jsonObj.url + "' target='_blank'>" + item.title + "</a>";
                 _mainApp.contentTree.appendNode("#", node, curToken);
 
@@ -239,7 +329,7 @@ MainApp.prototype.setContentTreeFolderId = function(folderId) {
  * @param  {Object} jsonObj   (optional)link json object.
  * @return {Object}           Tree node object.
  */
-MainApp.prototype.getTreeNode = function(parentId, type, driveItem, jsonObj) {
+MainApp.prototype.getTreeNode = function(parentId, type, driveItem, jsonObj, driveParentId) {
     // node.data
     var nodeData = jsonObj ? jsonObj : {};
 
@@ -250,6 +340,9 @@ MainApp.prototype.getTreeNode = function(parentId, type, driveItem, jsonObj) {
     } else if (driveItem.title) {
         title = driveItem.title;
     }
+
+    // data.driveParentId
+    nodeData.driveParentId = driveParentId ? driveParentId : parentId;
     
     // some property will in node.original(ex: iconLink)
     return {
