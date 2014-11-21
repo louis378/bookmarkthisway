@@ -108,7 +108,7 @@ TreeData.prototype.deleteAll = function() {
 TreeData.prototype.fireEvent = function(type, source) {
 	var event = {"type": type, "source": source};
 
-	for (int i = 0; i < this.listeners.length; i++) {
+	for (i = 0; i < this.listeners.length; i++) {
 		this.listeners[i].receiveEvent(event);
 	}
 }
@@ -127,7 +127,7 @@ TreeData.prototype.addListener = function(listener) {
  * @return {[type]}          [description]
  */
 TreeData.prototype.removeListener = function(listener) {
-	for (int i = 0; i < this.listeners.length; i++) {
+	for (i = 0; i < this.listeners.length; i++) {
 		if (this.listeners[i] == listener) {
 			this.listeners.splice(i, 1);  // remove item
 			break;
@@ -151,7 +151,7 @@ TreeData.prototype.searchChild = function(parentId, nodeId, callback) {
 	}
 
 	//
-	for (int nodeIndex = 0; nodeIndex < parentNode.nodes.length; nodeIndex++) {
+	for (nodeIndex = 0; nodeIndex < parentNode.nodes.length; nodeIndex++) {
 		var node = parentNode.nodes[nodeIndex];
 
 		// found
@@ -176,7 +176,7 @@ TreeData.prototype.search = function(id) {
 	 * @return {Node|false}        [description]
 	 */
 	function _search(folder) {
-		for (int i = 0; i < folder.nodes.length; i++) {
+		for (i = 0; i < folder.nodes.length; i++) {
 			var node = folder.nodes[i];
 
 			// check id
