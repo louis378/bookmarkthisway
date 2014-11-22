@@ -2,8 +2,11 @@
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-<script type="text/javascript" src="./libs/google-drive.js">
-</script><script type="text/javascript" src="./libs/drive-api-key.js"></script>
+<script type="text/javascript" src="./libs/google-drive.js"></script>
+<script type="text/javascript" src="./libs/tree-data.js"></script>
+<script type="text/javascript" src="./libs/google-ctrl-strategy.js"></script>
+
+<script type="text/javascript" src="./libs/drive-api-key.js"></script>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
@@ -45,7 +48,72 @@
             handleClientLoadFailed();
         }
 
-        g_GoogleDrive.auth(false);
+        // g_GoogleDrive.auth(false);
+        t = new TreeData("");
+        g = new GoogleCtrlStrategy(t);
+
+        t.addListener({
+            "receiveEvent": function(event) {
+                console.log(event);
+            },
+        });
+
+        g.auth(DRIVE_CLIENT_ID, SCOPES, {
+            "onAuthSuccess": function() {
+                console.log("success");
+                g.getRootSubfolders(function(node) {
+                    // console.log(node);
+                });
+
+                g.setRootFolder({id: "0B4X25K51rXhmRThJd1hLbU5WZGs", parentId: "0AIX25K51rXhmUk9PVA", name: "Bookmark", type: "folder"}, function(result) {
+
+                });
+
+                setTimeout(function() {
+                    g.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
+                        console.log("loadChildren: " + result);
+                    });
+                    g.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
+                        console.log("loadChildren: " + result);
+                    });
+
+                    setTimeout(function() {
+                        //  g.deleteNode({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
+                        //     function(result) {
+                        //         console.log(result);
+                        // });
+
+                        // g.deleteNode({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
+                        //     function(result) {
+                        //         console.log(result);
+                                 
+                        // g.updateFolder({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤", type: FOLDER_TYPE},
+                        //     function(result) {
+                        //         console.log(result);
+                        
+                        g.updateLink({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "連D落選囉！", description: "吃西堤囉", type: LINK_TYPE, url: "https://developers.google.com/drive/v2/reference/files/update"},
+                            function(result) {
+                                console.log(result);
+                        });
+
+                    }, 3000);
+                }, 3000);
+                
+                // g.addFolder({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤"},
+                //     function(result) {
+                //         console.log(result);
+                // });
+                 
+                // g.addLink({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "aaaaaaaaaaaaaaa", description: "想睡覺", url: "www.google.com.tw"},
+                //     function(result) {
+                //         console.log(result);
+                // });
+            },
+            "onAuthFail": function() {
+                alert("fail");
+            },
+            "showPopup": true
+        });
     }
 
     /**

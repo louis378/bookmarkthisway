@@ -116,7 +116,8 @@ GoogleDrive.prototype.retrieveAllFiles = function(callback, params) {
                     if (item.title) {
                         item.title = $("<div/>").text(item.title).html();
                     }
-                	callback(item);
+
+                	callback(item);  // callback
                 });	
             }
         });

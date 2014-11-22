@@ -12,9 +12,26 @@ const LINK_TYPE = "link";
  * @param {[type]} rootName [description]
  */
 function TreeData(rootName) {
-
-	this.root = createFolder("#", "#", rootName);
+	this.root = {};
 	this.listeners = [];
+}
+
+/**
+ * [setRoot description]
+ * @param {[type]} rootFolder [description]
+ */
+TreeData.prototype.setRoot = function(rootFolder) {
+	// valid folder node and append attributes
+	if (!validFolder(rootFolder)) {
+		return false;
+	}
+	initFolder(rootFolder);
+
+	this.clearAll();
+
+	this.root = rootFolder;
+	rootFolder.childrenLoaded = true;
+	this.fireEvent(CREATE_EVENT, rootFolder);
 }
 
 /**
@@ -23,14 +40,14 @@ function TreeData(rootName) {
  * @return {Folder|false} [description]
  */
 TreeData.prototype.addFolder = function(folder) {
-	// create folder node
-	var _folder = createFolder(folder);
-	if (!_folder) {
+	// valid folder node and append attributes
+	if (!validFolder(folder)) {
 		return false;
 	}
+	initFolder(folder);
 
 	// add into parent
-	return this.addNode(_folder);
+	return this.addNode(folder);
 }
 
 /**
@@ -39,18 +56,18 @@ TreeData.prototype.addFolder = function(folder) {
  * @return {Link|false} [description]
  */
 TreeData.prototype.addLink = function(link) {
-	// create link node
-	var _link = createLink(link);
-	if (!_link) {
+	// create link node and append attributes
+	if (!validLink(link)) {
 		return false;
 	}
+	initLink(link);
 
 	// add into parent
-	return this.addNode(_link);
+	return this.addNode(link);
 }
 
 /**
- * [addNode description]
+ * If the id has already exists, will not be added.
  * @param {[type]} node [description]
  * @return {Node|false} [description]
  */
@@ -58,6 +75,14 @@ TreeData.prototype.addNode = function(node) {
 	// parent node
 	var parentNode = this.search(node.parentId);
 	if (!parentNode) {
+		return false;
+	}
+	if (!validNode(node)) {
+		return false;
+	}
+
+	// already exists
+	if (this.search(node.id)) {
 		return false;
 	}
 	
@@ -68,34 +93,81 @@ TreeData.prototype.addNode = function(node) {
 }
 
 /**
- * [removeNode description]
+ * [deleteNode description]
  * @param  {[type]} node [description]
  * @return {bool}      [description]
  */
-TreeData.prototype.removeNode = function(node) {
+TreeData.prototype.deleteNode = function(node) {
+	var _treeData = this;
+
 	return this.searchChild(node.parentId, node.id, function(parentNode, node, nodeIndex) {
 		parentNode.nodes.splice(nodeIndex, 1);  // remove node
-		this.fireEvent(DELETE_EVENT, node);  // fire event
+		_treeData.fireEvent(DELETE_EVENT, node);  // fire event
+	});
+}
+
+/**
+ * [updateLink description]
+ * @param  {[type]} link [description]
+ * @return {[type]}      [description]
+ */
+TreeData.prototype.updateLink = function(link) {
+	return this.updateNode(link, function(searched) {
+		if (!validLink(link)) {
+			return false;
+		}
+
+		searched.url = link.url;
+		searched.description = link.description;
+		searched.iconUrl = link.iconUrl;
+		return true;
+	});
+}
+
+/**
+ * [updateFolder description]
+ * @param  {[type]} folder [description]
+ * @return {[type]}        [description]
+ */
+TreeData.prototype.updateFolder = function(folder) {
+	return this.updateNode(folder, function(searched) {
+		return validFolder(folder);
 	});
 }
 
 /**
  * [updateNode description]
  * @param  {[type]} node [description]
- * @return {bool}      [description]
+ * @param  {Function} hook return boolran
+ * @return {searched Node|false}      [description]
  */
-TreeData.prototype.updateNode = function(node) {
-	return this.searchChild(node.parentId, node.id, function(parentNode, node, nodeIndex) {
-		parentNode.nodes[nodeIndex] = node;
-		this.fireEvent(UPDATE_EVENT, node);  // fire event
-	});
+TreeData.prototype.updateNode = function(node, hook) {
+	var searched = this.search(node.id);
+	if (!searched ||
+		(searched.type != node.type)) {
+		return false;
+	}
+
+	// hook
+	if (!hook(searched)) {
+		return false;
+	}
+
+	// update
+	searched.name = node.name;
+
+	// fire event
+	this.fireEvent(UPDATE_EVENT, searched);
+
+	return searched;
 }
 
 /**
- * [deleteAll description]
+ * [clearAll description]
  * @return {[type]} [description]
  */
-TreeData.prototype.deleteAll = function() {
+TreeData.prototype.clearAll = function() {
+	this.root = {};
 	this.root.nodes = [];
 	this.fireEvent(CLEAR_ALL_EVENT, this.root);  // fire event
 }	
@@ -175,17 +247,16 @@ TreeData.prototype.search = function(id) {
 	 * @param  {[type]} folder [description]
 	 * @return {Node|false}        [description]
 	 */
-	function _search(folder) {
-		for (i = 0; i < folder.nodes.length; i++) {
-			var node = folder.nodes[i];
+	var _search = function(folder) {
+		for (var index in folder.nodes) {
+			var node = folder.nodes[index];
 
 			// check id
 			if (node.id == id) {
 				return node;
 			}
 
-			// search subnode
-			if (node.type == FOLDER_TYPE) {
+			if (node.type == FOLDER_TYPE) {  // search subnod
 				var find = _search(node);
 				if (find) {
 					return find;
@@ -205,24 +276,7 @@ TreeData.prototype.search = function(id) {
 }
 
 /**
- * [createFolder description]
- * @param  {[type]} folder
- * @return {Object|false}        {id: "", parentId: "", name: "", nodes: []}.
- *                                return false means validate fail.
- */
-function createFolder(folder) {
-	var _folder = createNode(folder.id, folder.parentId, folder.name);
-	if (!validFolder(_folder)) {
-		return false;
-	}
-
-	_folder.nodes = [];
-	_folder.type = FOLDER_TYPE;
-	return _folder;
-}
-
-/**
- * [validFolder description]
+ * 
  * @param  {[type]} folder [description]
  * @return {bool}        [description]
  */
@@ -231,22 +285,14 @@ function validFolder(folder) {
 }
 
 /**
- * [createLink description]
- * @param  {[type]} link
- * @return {Object|false}      {id: "", parentId: "", name: "", url: ""}.
- *                             return false means validate fail.
+ * [initFolder description]
+ * @param  {[type]} folder [description]
+ * @return {[type]}        [description]
  */
-function createLink(link) {
-	var _link = createNode(link.id, link.parentId, link.name);
-	_link.url = link.url;
-	if (!validLink(_link)) {
-		return false;
-	}
-
-	_link.type = LINK_TYPE;
-	_link.iconUrl = link.iconUrl;
-	_link.description = link.description;
-	return _link;
+function initFolder(folder) {
+	folder.nodes = [];
+	folder.type = FOLDER_TYPE;
+	folder.childrenLoaded = false;
 }
 
 /**
@@ -255,8 +301,16 @@ function createLink(link) {
  * @return {bool}      [description]
  */
 function validLink(link) {
-	return validNode(link) &&
-		   link.url;
+	return validNode(link);
+}
+
+/**
+ * [initLink description]
+ * @param  {[type]} link [description]
+ * @return {[type]}      [description]
+ */
+function initLink(link) {
+	link.type = LINK_TYPE;
 }
 
 /**
