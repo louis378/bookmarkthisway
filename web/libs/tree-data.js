@@ -1,5 +1,6 @@
 
 const CLEAR_ALL_EVENT = "clear_all";
+const CREATE_ROOT_EVENT = "create_root";
 const CREATE_EVENT = "create";
 const DELETE_EVENT = "delete";
 const UPDATE_EVENT = "update";
@@ -17,21 +18,69 @@ function TreeData(rootName) {
 }
 
 /**
+ * 
+ * @param  {[type]} folder [description]
+ * @return {bool}        [description]
+ */
+TreeData.validFolder = function(folder) {
+	return TreeData.validNode(folder);
+}
+
+/**
+ * [initFolder description]
+ * @param  {[type]} folder [description]
+ * @return {[type]}        [description]
+ */
+TreeData.initFolder = function(folder) {
+	folder.nodes = [];
+	folder.type = FOLDER_TYPE;
+	folder.childrenLoaded = false;
+}
+
+/**
+ * [validLink description]
+ * @param  {[type]} link [description]
+ * @return {bool}      [description]
+ */
+TreeData.validLink = function(link) {
+	return TreeData.validNode(link);
+}
+
+/**
+ * [initLink description]
+ * @param  {[type]} link [description]
+ * @return {[type]}      [description]
+ */
+TreeData.initLink = function(link) {
+	link.type = LINK_TYPE;
+}
+
+/**
+ * [validNode description]
+ * @param  {[type]} node [description]
+ * @return {bool}      [description]
+ */
+TreeData.validNode = function(node) {
+	return node.id &&
+		   node.parentId &&
+		   node.name;
+}
+
+/**
  * [setRoot description]
  * @param {[type]} rootFolder [description]
  */
 TreeData.prototype.setRoot = function(rootFolder) {
 	// valid folder node and append attributes
-	if (!validFolder(rootFolder)) {
+	if (!TreeData.validFolder(rootFolder)) {
 		return false;
 	}
-	initFolder(rootFolder);
+	TreeData.initFolder(rootFolder);
 
 	this.clearAll();
 
 	this.root = rootFolder;
-	rootFolder.childrenLoaded = true;
-	this.fireEvent(CREATE_EVENT, rootFolder);
+	this.fireEvent(CREATE_ROOT_EVENT, rootFolder);
 }
 
 /**
@@ -41,10 +90,10 @@ TreeData.prototype.setRoot = function(rootFolder) {
  */
 TreeData.prototype.addFolder = function(folder) {
 	// valid folder node and append attributes
-	if (!validFolder(folder)) {
+	if (!TreeData.validFolder(folder)) {
 		return false;
 	}
-	initFolder(folder);
+	TreeData.initFolder(folder);
 
 	// add into parent
 	return this.addNode(folder);
@@ -57,17 +106,17 @@ TreeData.prototype.addFolder = function(folder) {
  */
 TreeData.prototype.addLink = function(link) {
 	// create link node and append attributes
-	if (!validLink(link)) {
+	if (!TreeData.validLink(link)) {
 		return false;
 	}
-	initLink(link);
+	TreeData.initLink(link);
 
 	// add into parent
 	return this.addNode(link);
 }
 
 /**
- * If the id has already exists, will not be added.
+ * If the id has already exists, will not be added.(private)
  * @param {[type]} node [description]
  * @return {Node|false} [description]
  */
@@ -77,7 +126,7 @@ TreeData.prototype.addNode = function(node) {
 	if (!parentNode) {
 		return false;
 	}
-	if (!validNode(node)) {
+	if (!TreeData.validNode(node)) {
 		return false;
 	}
 
@@ -113,7 +162,7 @@ TreeData.prototype.deleteNode = function(node) {
  */
 TreeData.prototype.updateLink = function(link) {
 	return this.updateNode(link, function(searched) {
-		if (!validLink(link)) {
+		if (!TreeData.validLink(link)) {
 			return false;
 		}
 
@@ -131,7 +180,7 @@ TreeData.prototype.updateLink = function(link) {
  */
 TreeData.prototype.updateFolder = function(folder) {
 	return this.updateNode(folder, function(searched) {
-		return validFolder(folder);
+		return TreeData.validFolder(folder);
 	});
 }
 
@@ -223,7 +272,7 @@ TreeData.prototype.searchChild = function(parentId, nodeId, callback) {
 	}
 
 	//
-	for (nodeIndex = 0; nodeIndex < parentNode.nodes.length; nodeIndex++) {
+	for (var nodeIndex = 0; nodeIndex < parentNode.nodes.length; nodeIndex++) {
 		var node = parentNode.nodes[nodeIndex];
 
 		// found
@@ -273,64 +322,4 @@ TreeData.prototype.search = function(id) {
 	} else {  // do first recursive
 		return _search(this.root);
 	}
-}
-
-/**
- * 
- * @param  {[type]} folder [description]
- * @return {bool}        [description]
- */
-function validFolder(folder) {
-	return validNode(folder);
-}
-
-/**
- * [initFolder description]
- * @param  {[type]} folder [description]
- * @return {[type]}        [description]
- */
-function initFolder(folder) {
-	folder.nodes = [];
-	folder.type = FOLDER_TYPE;
-	folder.childrenLoaded = false;
-}
-
-/**
- * [validLink description]
- * @param  {[type]} link [description]
- * @return {bool}      [description]
- */
-function validLink(link) {
-	return validNode(link);
-}
-
-/**
- * [initLink description]
- * @param  {[type]} link [description]
- * @return {[type]}      [description]
- */
-function initLink(link) {
-	link.type = LINK_TYPE;
-}
-
-/**
- * Will not validate parameters(id, parentId, name).
- * @param  {[type]} id       [description]
- * @param  {[type]} parentId [description]
- * @param  {[type]} name     [description]
- * @return {Object}          {id: "", parentId: "", name: ""}.
- */
-function createNode(id, parentId, name) {
-	return {"id": id, "parentId": parentId, "name": name};
-}
-
-/**
- * [validNode description]
- * @param  {[type]} node [description]
- * @return {bool}      [description]
- */
-function validNode(node) {
-	return node.id &&
-		   node.parentId &&
-		   node.name;
 }

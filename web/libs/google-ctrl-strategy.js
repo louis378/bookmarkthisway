@@ -1,4 +1,4 @@
-const LINK_FILE_EXTENSION = "btw";
+const LINK_FILE_EXTENSION = ".btw";
 const BOUNDARY = "-------314159265358979323846";
 
 /**
@@ -13,10 +13,106 @@ function createResult(success) {
  * Constructor.
  * @param {[type]} treeData TreeData instance. 
  */
-function GoogleCtrlStrategy(treeData) {
-	this.treeData = treeData;
+function GoogleCtrlStrategy() {
+	this.treeData = {};
 	this.clientId = "";
 	this.scopes = "";
+}
+
+/** XXX
+ * [insertFile description]
+ * @param  {[type]}   title    [description]
+ * @param  {[type]}   content  [description]
+ * @param  {Function} callback function(resp)
+ */
+GoogleCtrlStrategy.insertFile = function(link, callback) {
+    var multipartRequestBody = GoogleCtrlStrategy.getLinkMultipartRequestBody(link);
+
+    var request = gapi.client.request({
+        "path": "/upload/drive/v2/files",
+        "method": "POST",
+        "params": {"uploadType": "multipart"},
+        "headers": {
+          "Content-Type": "multipart/mixed; boundary=\"" + BOUNDARY + "\""
+        },
+        "body": multipartRequestBody
+    });
+
+    request.execute(callback);
+}
+
+/**
+ * [getLinkMultipartRequestBody description]
+ * @param  {[type]} link [description]
+ * @return {[type]}      [description]
+ */
+GoogleCtrlStrategy.getLinkMultipartRequestBody = function(link) {
+    var metadata = GoogleCtrlStrategy.getLinkFileMetadata(link);
+    const delimiter = "\r\n--" + BOUNDARY + "\r\n";
+    const close_delim = "\r\n--" + BOUNDARY + "--";
+
+    var multipartRequestBody =
+        delimiter +
+        "Content-Type: application/json\r\n\r\n" +
+        JSON.stringify(metadata) +
+        delimiter +
+        "Content-Type: " + metadata.mimeType + "\r\n" +
+        "\r\n" +
+        JSON.stringify(link) +
+        close_delim;
+    return multipartRequestBody;
+}
+
+/**
+ * [description]
+ * @param  {[type]} link [description]
+ * @return {[type]}      [description]
+ */
+GoogleCtrlStrategy.getLinkFileMetadata = function(link) {
+    var metadata = {
+        "title": link.name,
+        "mimeType": "text/plain",
+        "parents": [{"id": link.parentId}],
+        "description": link.description,
+        "fileExtension": LINK_FILE_EXTENSION,
+    };
+    // manipulate with LINK_FILE_EXTENSION
+    metadata.title = metadata.title ? metadata.title + LINK_FILE_EXTENSION : LINK_FILE_EXTENSION;
+
+    return metadata;
+}
+
+/**
+ * Download a file's content.
+ *
+ * @param {File} file Drive File instance.
+ * @param {Function} callback Function to call when the request is complete.
+ *                            Format: callback(text); text is remote file content, if null means not  file or some error occur.
+ */
+GoogleCtrlStrategy.downloadFile = function(file, callback) {
+    if (file.downloadUrl) {
+        var accessToken = gapi.auth.getToken().access_token;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", file.downloadUrl);
+        xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+        xhr.onload = function() {
+            callback(xhr.responseText);
+        };
+        xhr.onerror = function() {
+            callback(null);
+        };
+        xhr.send();
+    } else {
+        callback(null);
+    }
+}
+
+/**
+ * [setTreeData description]
+ * @param {[type]} treeData [description]
+ */
+GoogleCtrlStrategy.prototype.setTreeData = function(treeData) {
+    this.treeData = treeData;
 }
 
 /**
@@ -44,7 +140,7 @@ GoogleCtrlStrategy.prototype.auth = function(clientId, scopes, callback) {
 
 /**
  * [getRootSubfolders description]
- * @param  {Function} callback function(node)
+ * @param  {Function} callback function(node, error)
  * @return {void}
  */
 GoogleCtrlStrategy.prototype.getRootSubfolders = function(callback) {
@@ -89,17 +185,27 @@ GoogleCtrlStrategy.prototype.generateRootToken = function() {
 /**
  * [loadChildren description]
  * @param  {[type]}   folderId [description]
- * @param  {Function} callback [description]
  * @return {[type]}            [description]
  */
-GoogleCtrlStrategy.prototype.loadChildren = function(folderId, callback) {
-	var node = this.treeData.search(folderId);
-	if (node.type != FOLDER_TYPE) {
+GoogleCtrlStrategy.prototype.loadChildren = function(folderId) {
+	var folder = this.treeData.search(folderId);
+	if (folder.type != FOLDER_TYPE) {
 		callback(createResult(false));
 	}
 	var _gCtrl = this;
 
-	this.retrieveAllFiles(function(node) {
+    // XXX for error (某個 node 沒從遠端抓到，目前先把 parent 的 childrenLoaded 設為 false)
+    // 設定 childrenLoaded 部分之後應該要交給父類別或是 TreeController 處理
+    if (folder.childrenLoaded) {
+        return;
+    }
+    folder.childrenLoaded = true;
+	this.retrieveAllFiles(function(node, error) {
+        if (error) {
+            folder.childrenLoaded = false;  // XXX
+            return;
+        }
+
 		if (node.type == FOLDER_TYPE) {
 			var success = _gCtrl.treeData.addFolder(node);
 		} else if (node.type == LINK_TYPE) {
@@ -107,9 +213,6 @@ GoogleCtrlStrategy.prototype.loadChildren = function(folderId, callback) {
 		}
 	}, "'" + folderId + "'" + " in parents and trashed = false");
 
-
-	// current may load finish
-	callback(createResult(true));
 }
 
 
@@ -121,7 +224,7 @@ GoogleCtrlStrategy.prototype.loadChildren = function(folderId, callback) {
 GoogleCtrlStrategy.prototype.addLink = function(link, callback) {
     var _gCtrl = this;
 
-    this.insertFile(link, function(resp) {
+    GoogleCtrlStrategy.insertFile(link, function(resp) {
         if (!resp.error) {
             link.id = resp.id;
             var added = _gCtrl.treeData.addLink(link);
@@ -131,28 +234,6 @@ GoogleCtrlStrategy.prototype.addLink = function(link, callback) {
             callback(createResult(false));
         }
     });
-}
-
-/** XXX
- * [insertFile description]
- * @param  {[type]}   title    [description]
- * @param  {[type]}   content  [description]
- * @param  {Function} callback function(resp)
- */
-GoogleCtrlStrategy.prototype.insertFile = function(link, callback) {
-	var multipartRequestBody = this.getLinkMultipartRequestBody(link);
-
-    var request = gapi.client.request({
-        "path": "/upload/drive/v2/files",
-        "method": "POST",
-        "params": {"uploadType": "multipart"},
-        "headers": {
-          "Content-Type": "multipart/mixed; boundary=\"" + BOUNDARY + "\""
-        },
-        "body": multipartRequestBody
-    });
-
-    request.execute(callback);
 }
 
 /**
@@ -215,7 +296,7 @@ GoogleCtrlStrategy.prototype.deleteNode = function(node, callback) {
  * @return {[type]}            [description]
  */
 GoogleCtrlStrategy.prototype.updateLink = function(link, callback) {
-	var multipartRequestBody = this.getLinkMultipartRequestBody(link);
+	var multipartRequestBody = GoogleCtrlStrategy.getLinkMultipartRequestBody(link);
 	var request = gapi.client.request({
         "path": "/upload/drive/v2/files/" + link.id,
         "method": "PUT",
@@ -230,52 +311,11 @@ GoogleCtrlStrategy.prototype.updateLink = function(link, callback) {
     request.execute(function(resp) {
 		if (!resp.error) {
 			var updated = _gCtrl.treeData.updateLink(link);
-			callback(updated != false);
+			callback(createResult(updated));
 		} else {
 			callback(createResult(false));
 		}
 	});
-}
-
-/**
- * [getLinkMultipartRequestBody description]
- * @param  {[type]} link [description]
- * @return {[type]}      [description]
- */
-GoogleCtrlStrategy.prototype.getLinkMultipartRequestBody = function(link) {
-	var metadata = this.getLinkFileMetadata(link);
-    const delimiter = "\r\n--" + BOUNDARY + "\r\n";
-    const close_delim = "\r\n--" + BOUNDARY + "--";
-
-    var multipartRequestBody =
-        delimiter +
-        "Content-Type: application/json\r\n\r\n" +
-        JSON.stringify(metadata) +
-        delimiter +
-        "Content-Type: " + metadata.mimeType + "\r\n" +
-        "\r\n" +
-        JSON.stringify(link) +
-        close_delim;
-    return multipartRequestBody;
-}
-
-/**
- * [description]
- * @param  {[type]} link [description]
- * @return {[type]}      [description]
- */
-GoogleCtrlStrategy.prototype.getLinkFileMetadata = function(link) {
-	var metadata = {
-        "title": link.name,
-        "mimeType": "text/plain",
-        "parents": [{"id": link.parentId}],
-        "description": link.description,
-        "fileExtension": LINK_FILE_EXTENSION,
-    };
-    // manipulate with BTW_EXTENSION
-    metadata.title = metadata.title ? metadata.title + BTW_EXTENSION : BTW_EXTENSION;
-
-    return metadata;
 }
 
 /**
@@ -295,7 +335,7 @@ GoogleCtrlStrategy.prototype.updateFolder = function(folder, callback) {
 	request.execute(function(resp) {
 		if (!resp.error) {
 			var updated = _gCtrl.treeData.updateFolder(folder);
-			callback(updated != false);
+			callback(createResult(updated));
 		} else {
 			callback(createResult(false));
 		}
@@ -318,7 +358,7 @@ GoogleCtrlStrategy.prototype.retrieveFile = function(id, callback) {
 /**
  * Retrieve a list of File resources(AJAX).
  * Use retrieveAllFiles instead this function.
- * @param {Function} callback Function to call when the request is complete.
+ * @param {Function} callback Function callback(node, error). error is true means getting some node error.
 */
 GoogleCtrlStrategy.prototype.retrieveAllFiles = function(callback, params) {
     var initialRequest = gapi.client.drive.files.list({"q": params});  // request with filter('q')
@@ -336,6 +376,10 @@ GoogleCtrlStrategy.prototype.retrievePageOfFiles = function(request, result, cal
 	var beforeRootToken = this.rootToken;
 
  	request.execute(function(resp) {
+
+        if (resp.error) {
+            callback(null, true);
+        }
 
 	    result = result.concat(resp.items);
 	    if (!result || !$.trim(result)) {  // jquery is initialize??
@@ -372,18 +416,18 @@ GoogleCtrlStrategy.prototype.retrievePageOfFiles = function(request, result, cal
  * @return {[type]}                   [description]
  */
 GoogleCtrlStrategy.prototype.retrieveItem = function(item, beforeRootToken, callback) {
-	var node = new Object();
+    var node = new Object();
 
     // attrs
     node.id = item.id;
     node.parentId = item.parents[0].id;  // parentId
 
     // name
-    // manipulate with BTW_EXTENSION extension
+    // manipulate with LINK_FILE_EXTENSION extension
     if (item.mimeType == "application/vnd.google-apps.folder") {
         node.name = item.title;
     } else {
-    	var lastndex = item.title.lastIndexOf(BTW_EXTENSION);
+        var lastndex = item.title.lastIndexOf(LINK_FILE_EXTENSION);
         if (lastndex == -1) {
             return;
         }
@@ -397,57 +441,32 @@ GoogleCtrlStrategy.prototype.retrieveItem = function(item, beforeRootToken, call
 
     // link
     if (item.mimeType == "application/vnd.google-apps.folder") {
-    	node.type = FOLDER_TYPE;
+        node.type = FOLDER_TYPE;
 
-    	// changed root
-	    if (beforeRootToken != this.rootToken) {
-	    	return;
-	    }
-    	callback(node);  // callback
+        // changed root
+        if (beforeRootToken != this.rootToken) {
+            return;
+        }
+        callback(node);  // callback
 
     // folder
     } else {
-    	var _gCtrl = this;
+        var _gCtrl = this;
 
-    	this.downloadFile(item, function(text) {
-    		node.type = LINK_TYPE;
+        GoogleCtrlStrategy.downloadFile(item, function(text) {
+            node.type = LINK_TYPE;
             var jsonObj = JSON.parse(text);
             if (jsonObj) {
-            	node.url = jsonObj.url;  // url
-		        node.description = jsonObj.description;  // description
-		        node.iconUrl = jsonObj.iconUrl;  // iconUrl
-	    	}
+                node.url = jsonObj.url;  // url
+                node.description = jsonObj.description;  // description
+                node.iconUrl = jsonObj.iconUrl;  // iconUrl
+            }
 
-	    	// changed root
-		    if (beforeRootToken != _gCtrl.rootToken) {
-		    	return;
-		    }
-	    	callback(node);  // callback
-    	});
-    }
-}
-
-/**
- * Download a file's content.
- *
- * @param {File} file Drive File instance.
- * @param {Function} callback Function to call when the request is complete.
- *                            Format: callback(text); text is remote file content, if null means not  file or some error occur.
- */
-GoogleCtrlStrategy.prototype.downloadFile = function(file, callback) {
-    if (file.downloadUrl) {
-        var accessToken = gapi.auth.getToken().access_token;
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", file.downloadUrl);
-        xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
-        xhr.onload = function() {
-            callback(xhr.responseText);
-        };
-        xhr.onerror = function() {
-            callback(null);
-        };
-        xhr.send();
-    } else {
-        callback(null);
+            // changed root
+            if (beforeRootToken != _gCtrl.rootToken) {
+                return;
+            }
+            callback(node);  // callback
+        });
     }
 }

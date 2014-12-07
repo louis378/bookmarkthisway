@@ -2,145 +2,152 @@
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-<script type="text/javascript" src="./libs/google-drive.js"></script>
 <script type="text/javascript" src="./libs/tree-data.js"></script>
 <script type="text/javascript" src="./libs/google-ctrl-strategy.js"></script>
+<script type="text/javascript" src="./libs/tree-controller.js"></script>
 
 <script type="text/javascript" src="./libs/drive-api-key.js"></script>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
+<script type="text/javascript" src="./libs/tree-manipulation.js"></script>
+
 
 <script type="text/javascript" src="./libs/jtree/jstree.min.js"></script>
 <script type="text/javascript" src="./libs/tree.js"></script>
 
 <script type="text/javascript" src="./libs/main.js"></script>
-<script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 
 <script type="text/javascript">
     const SCOPES = "https://www.googleapis.com/auth/drive";
-    const g_GoogleDrive = new GoogleDrive(DRIVE_CLIENT_ID, SCOPES);
+    var g_TreeController;
+    var g_GoogleCtrlStrategy;
+    var g_CurRootSubfolders = {};
 
     // js init
     $(function() {
-        const mainApp = new MainApp(g_GoogleDrive, "folderTree", "contentTree");
+        g_TreeController = new TreeController();
+        var mainApp = new MainApp(g_TreeController, "folderTree", "contentTree");
 
         // root folder select
         $("#pageSelect").hide();
-        $("#pageSelect").on("change", function (e) {
-           mainApp.setRootFolder(this.value);
+        $("#pageSelect").on("change", function(e) {
+            g_TreeController.setRootFolder(g_CurRootSubfolders[this.value], function(result) {
+                if (!result.isSuccess) {
+                    JqUi.popupMessage("error", "set root folder: '" + $(this).find("option:selected").text() + "' failed!");
+                }
+            });
         });
 
-        // 
-        // $("#folderTree").tooltip();
-        // $("#contentTree").tooltip();
+        $("#folderTree").tooltip();
+        $("#contentTree").tooltip();
     });
 
     /**
      * Called when the client library is loaded to start the auth flow.
      */
     function handleClientLoad() {
-        g_GoogleDrive.onAuthSuccess = function() {
-            authSuccess();
-        };
-        g_GoogleDrive.onAuthFail = function() {
-            handleClientLoadFailed();
-        }
 
-        // g_GoogleDrive.auth(false);
-        t = new TreeData("");
-        g = new GoogleCtrlStrategy(t);
+        g_GoogleCtrlStrategy = new GoogleCtrlStrategy();
+        g_TreeController.setCtrlStrategy(g_GoogleCtrlStrategy);
 
-        t.addListener({
-            "receiveEvent": function(event) {
-                console.log(event);
-            },
-        });
+        // XXX-debug
+        // g_TreeController.addTreeDataListener({
+        //     "receiveEvent": function(event) {
+        //         console.log(event);
+        //     },
+        // });
 
-        g.auth(DRIVE_CLIENT_ID, SCOPES, {
+        googleAuth();
+    }
+
+    /**
+     * [googleAuth description]
+     */
+    function googleAuth() {
+        g_GoogleCtrlStrategy.auth(DRIVE_CLIENT_ID, SCOPES, {
             "onAuthSuccess": function() {
                 console.log("success");
-                g.getRootSubfolders(function(node) {
-                    // console.log(node);
-                });
-
-                g.setRootFolder({id: "0B4X25K51rXhmRThJd1hLbU5WZGs", parentId: "0AIX25K51rXhmUk9PVA", name: "Bookmark", type: "folder"}, function(result) {
-
-                });
-
-                setTimeout(function() {
-                    g.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
-                        console.log("loadChildren: " + result);
-                    });
-                    g.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
-                        console.log("loadChildren: " + result);
-                    });
-
-                    setTimeout(function() {
-                        //  g.deleteNode({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
-                        //     function(result) {
-                        //         console.log(result);
-                        // });
-
-                        // g.deleteNode({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
-                        //     function(result) {
-                        //         console.log(result);
-                                 
-                        // g.updateFolder({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤", type: FOLDER_TYPE},
-                        //     function(result) {
-                        //         console.log(result);
-                        
-                        g.updateLink({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "連D落選囉！", description: "吃西堤囉", type: LINK_TYPE, url: "https://developers.google.com/drive/v2/reference/files/update"},
-                            function(result) {
-                                console.log(result);
-                        });
-
-                    }, 3000);
-                }, 3000);
-                
-                // g.addFolder({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤"},
-                //     function(result) {
-                //         console.log(result);
-                // });
-                 
-                // g.addLink({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "aaaaaaaaaaaaaaa", description: "想睡覺", url: "www.google.com.tw"},
-                //     function(result) {
-                //         console.log(result);
-                // });
+                googleAuthSuccess();
             },
             "onAuthFail": function() {
-                alert("fail");
+                JqUi.popupMessage("error", "Auth failed!");
+
+                $("#loginBtn").attr('disabled', false).click(function() {
+                    googleAuth();
+                });
             },
             "showPopup": true
         });
     }
 
     /**
-     * [handleClientLoadFailed description]
-     */
-    function handleClientLoadFailed() {
-        g_GoogleDrive.onAuthFail = function() {
-            alert("auth failed");
-        }
-
-        $("#loginBtn").attr('disabled', false).click(function() {
-            g_GoogleDrive.auth(true);
-        });
-    }
-
-    /**
      * Auth success action.
      */
-    function authSuccess() {
+    function googleAuthSuccess() {
         // login button invisible
         $("#loginBtn").hide();
 
         // Access token has been successfully retrieved, requests can be sent to the API.
-        g_GoogleDrive.getRootFolders(function(item) {
-            $("#pageSelect").append($("<option></option>").attr("value", item.id).text(item.title));
+        g_CurRootSubfolders = {};
+        g_TreeController.getRootSubfolders(function(node, error) {
+            if (!error) {
+                var opt = $("#pageSelect").append($("<option></option>").attr("value", node.id).text(node.name));
+                g_CurRootSubfolders[node.id] = node;
+            }
         });
         $("#pageSelect").show();
+
+        // g_TreeController.getRootSubfolders(function(node) {
+        //         // console.log(node);
+        //     });
+
+        //     g_TreeController.setRootFolder({id: "0B4X25K51rXhmRThJd1hLbU5WZGs", parentId: "0AIX25K51rXhmUk9PVA", name: "Bookmark", type: "folder"}, function(result) {
+
+        //     });
+
+        //     setTimeout(function() {
+        //         g_TreeController.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
+        //             console.log("loadChildren: " + result);
+        //         });
+        //         g_TreeController.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
+        //             console.log("loadChildren: " + result);
+        //         });
+
+        //         setTimeout(function() {
+        //             //  g_TreeController.deleteNode({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
+        //             //     function(result) {
+        //             //         console.log(result);
+        //             // });
+
+        //             // g_TreeController.deleteNode({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
+        //             //     function(result) {
+        //             //         console.log(result);
+        //             // });        
+                             
+        //             // g_TreeController.updateFolder({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤", type: FOLDER_TYPE},
+        //             //     function(result) {
+        //             //         console.log(result);
+                    
+        //             // g_TreeController.updateLink({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "連D落選囉！" + new Date(), description: "吃西堤囉" + new Date(), type: LINK_TYPE, url: "https://developers.google.com/drive/v2/reference/files/update"},
+        //             //     function(result) {
+        //             //         console.log(result);
+        //             // });
+
+        //         }, 5000);
+        //     }, 3000);
+            
+        //     // g_TreeController.addFolder({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ ggg" + new Date()},
+        //     //     function(result) {
+        //     //         console.log(result);
+        //     // });
+             
+        //     // g_TreeController.addLink({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "aaaaaaaaaaaaaaa" + new Date(), description: "想睡覺", url: "www.google.com.tw"},
+        //     //     function(result) {
+        //     //         console.log(result);
+        //     // });
     }  
 
 </script>
@@ -162,7 +169,7 @@
 </header>    
 
 <div>
-    <button title="qq" id="loginBtn" class="btn btn-danger" disabled>
+    <button title="google auth" id="loginBtn" class="btn btn-danger" disabled>
         <i class="fa fa-google-plus-square fa-2x" style="vertical-align:middle"></i> Login
     </button>
 </div>
