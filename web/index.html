@@ -60,7 +60,9 @@
         //     },
         // });
 
-        googleAuth();
+        $("#loginBtn").attr('disabled', false).click(function() {
+            googleAuth();
+        });
     }
 
     /**
@@ -74,10 +76,6 @@
             },
             "onAuthFail": function() {
                 JqUi.popupMessage("error", "Auth failed!");
-
-                $("#loginBtn").attr('disabled', false).click(function() {
-                    googleAuth();
-                });
             },
             "showPopup": true
         });
