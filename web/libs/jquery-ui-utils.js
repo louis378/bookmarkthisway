@@ -18,23 +18,76 @@ JqUi = {
 	},
 
 	/**
-	 * [popupBookmarkData description]
-	 * @param  {Object} configure      {bookmark: {url: "xxx", title: "xxx", description: "xxx"},
+	 * [popupFolderData description]
+	 * @param  {[type]} configure      {folder: {name: "xxx"},
 	 *                                 	window: {title: "ooo", commitBtnLabel: "ooo", cancelBtnLabel: "ooo"}
 	 *                                 	} if not set will use default value.
-	 * @param  {Function} commitCallback Parameter: Object: {url: "xxx", title: "xxx", description: "xxx"}, return true will close window.
+	 * @param  {Function} commitCallback Parameter: Object: {name: xxx}
+	 */
+	popupFolderData: function(configure, commitCallback) {
+		configure = configure || {};
+
+		// init folser
+		var folderObj = configure["folder"] || {};
+		if (!folderObj["name"]) folderObj["name"] = "";
+
+		// init window
+		var windowObj = configure["window"] || {};
+		if (!windowObj["title"]) windowObj["title"] = "Bookmark Data";  // title
+		if (!windowObj["commitBtnLabel"]) windowObj["commitBtnLabel"] = "Submit";  // commit button label
+		if (!windowObj["cancelBtnLabel"]) windowObj["cancelBtnLabel"] = "Cancel";  // cancel button label
+
+		// html
+		var htmlBody = '<form class="form-horizontal" role="form">' +
+							
+							'<div class="form-group">' +
+								'<label for="name" class="control-label">Name:</label>' +
+								'<input type="text" title="name" id="name" placeholder="Name" class="form-control" value="' + folderObj["name"] + '">' +
+							'</div>' +
+
+						'</form>';
+
+		// buttons function
+		var buttons = {};
+		buttons[windowObj["commitBtnLabel"]] = function() {
+			var folderParams = {
+				"name": $("#name", this).val(),
+			};
+
+			// callback
+			if (commitCallback(folderParams)) {
+				$(this).dialog("close");
+			}
+		};
+		buttons[windowObj["cancelBtnLabel"]] = function() {
+			$(this).dialog("close");
+		};
+	
+		// popup
+		$('<div title="' + windowObj["title"] + '">' + htmlBody + '</div>').dialog({
+			"modal": true,
+			"buttons": buttons,
+		});
+	},
+
+	/**
+	 * [popupBookmarkData description]
+	 * @param  {Object} configure      {link: {url: "xxx", name: "xxx", description: "xxx"},
+	 *                                 	window: {title: "ooo", commitBtnLabel: "ooo", cancelBtnLabel: "ooo"}
+	 *                                 	} if not set will use default value.
+	 * @param  {Function} commitCallback Parameter: Object: {url: "xxx", name: "xxx", description: "xxx"}, return true will close window.
 	 */
 	popupBookmarkData: function(configure, commitCallback) {
-		if (!configure) configure = {};
+		configure = configure || {};
 
-		// init bookmark object
-		var bookmarkObj = (configure["bookmark"]) ? configure["bookmark"] : {};
-		if (!bookmarkObj["url"]) bookmarkObj["url"] = "";  // url
-		if (!bookmarkObj["title"]) bookmarkObj["title"] = "";  // title
-		if (!bookmarkObj["description"]) bookmarkObj["description"] = "";  // description
+		// init link object
+		var linkObj = configure["link"] || {};
+		if (!linkObj["url"]) linkObj["url"] = "";  // url
+		if (!linkObj["name"]) linkObj["name"] = "";  // name
+		if (!linkObj["description"]) linkObj["description"] = "";  // description
 
 		// init window object
-		var windowObj = (configure["window"]) ? configure["window"] : {};
+		var windowObj = configure["window"] || {};
 		if (!windowObj["title"]) windowObj["title"] = "Bookmark Data";  // title
 		if (!windowObj["commitBtnLabel"]) windowObj["commitBtnLabel"] = "Submit";  // commit button label
 		if (!windowObj["cancelBtnLabel"]) windowObj["cancelBtnLabel"] = "Cancel";  // cancel button label
@@ -43,17 +96,17 @@ JqUi = {
 		var htmlBody = '<form class="form-horizontal" role="form">' +
 							'<div class="form-group">' +
 								'<label for="url" class="control-label">URL:</label>' +
-								'<input type="url" name="url" id="url" placeholder="URL..." class="form-control">' +
+								'<input type="url" title="url" id="url" placeholder="URL..." class="form-control" value="' + linkObj["url"] + '">' +
 							'</div>' +
 
 							'<div class="form-group">' +
-								'<label for="title" class="control-label">Title:</label>' +
-								'<input type="text" name="title" id="title" placeholder="Title" class="form-control">' +
+								'<label for="name" class="control-label">Name:</label>' +
+								'<input type="text" title="name" id="name" placeholder="Name" class="form-control" value="' + linkObj["name"] + '">' +
 							'</div>' +
 
 							'<div class="form-group">' +
 								'<label for="description" class="control-label">Description:</label>' +
-								'<textarea name="description" id="description" placeholder="Description" class="form-control" rows="3"></textarea>' +
+								'<textarea title="description" id="description" placeholder="Description" class="form-control" rows="3">' + linkObj["description"] + '</textarea>' +
 							'</div>' +
 						'</form>';
 
@@ -62,7 +115,7 @@ JqUi = {
 		buttons[windowObj["commitBtnLabel"]] = function() {
 			var bookmarkParams = {
 				"url": $("#url", this).val(),
-				"title": $("#title", this).val(),
+				"name": $("#name", this).val(),
 				"description": $("#description", this).val(),
 			};
 
