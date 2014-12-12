@@ -39,7 +39,9 @@ MainApp.prototype.initListeners = function() {
 
     // delete event in folder tree
     this.folderTree.tree.$tree.on("delete_node.jstree", function (e, data) {
-        _mainApp.contentTree.clearAll();
+        if (data.node.id == _mainApp.contentTree.tree.rootFolder.id) {
+            _mainApp.contentTree.clearAll();
+        }
     });
 
     // XXX trick-rename_node.jstree in content tree
