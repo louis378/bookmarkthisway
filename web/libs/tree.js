@@ -70,20 +70,18 @@ Tree.wrapConfig = function(config, treeManipulation) {
 
                 "addLink": {
                     "separator_before": true,
-                    "label": "Add Link",
+                    "label": "Add Link in\"" + treeNode.name + "\"",
                     "icon": "glyphicon  glyphicon-link",
                     "action": function() {
-                    	var parentId = Tree.getCreateParentId(treeNode);
-                        treeManipulation.addLink(parentId);
+                        treeManipulation.addLink(treeNode);
                     }
                 },
 
                 "addFolder": {
-                    "label": "Add Folder",
+                    "label": "Add Folder in\"" + treeNode.name + "\"",
                     "icon": "glyphicon  glyphicon-folder-open",
                     "action": function() {
-                    	var parentId = Tree.getCreateParentId(treeNode);
-                        treeManipulation.addFolder(parentId);
+                        treeManipulation.addFolder(treeNode);
                     }
                 },
             };

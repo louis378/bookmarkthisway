@@ -11,6 +11,10 @@
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery.ui-contextmenu/1.8.0/jquery.ui-contextmenu.min.js"></script>
+
+
+
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 <script type="text/javascript" src="./libs/tree-manipulation.js"></script>
 
@@ -146,6 +150,8 @@
         //     //     function(result) {
         //     //         console.log(result);
         //     // });
+
+        
     }  
 
 </script>
@@ -162,8 +168,8 @@
 <style>
 #folderTree {
     background-color: #ff0000;
-    /*height: 100px;
-    width: 50px;*/
+    height: 1000px;
+    width: 500px;
     overflow-y: scroll; 
 }
 
@@ -195,7 +201,7 @@
     </section>
 </div>
 
-<div class="row">
+<div id="treeContainer" class="row">
     <div id="folderTree" class="col-md-4"></div>
 
     <div id="contentTree" class="col-md-4"></div>
