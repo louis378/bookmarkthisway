@@ -79,12 +79,17 @@ Tree.wrapConfig = function(config, treeManipulation) {
                 "addLink": {
                     "separator_before": true,
                     "label": "Add Link in\"" + treeNode.name + "\"",
-                    "icon": "ui-icon-link",
+                    "icon": "glyphicon  glyphicon-link",
                     "action": function() {
                         treeManipulation.addLink(treeNode);
                     }
                 },
             };
+
+            if (treeNode.type == LINK_TYPE) {
+                delete items.addFolder;
+                delete items.addLink;
+            }
 
             return items;
         }
