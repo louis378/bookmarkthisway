@@ -48,6 +48,24 @@ MainApp.prototype.initListeners = function() {
     this.contentTree.tree.$tree.on("rename_node.jstree", function (e, data) {
         _mainApp.reloadContentTree(_mainApp.contentTree.tree.rootFolder);
     });
+
+    // double click in content tree
+    this.contentTree.tree.$tree.on("dblclick.jstree", function (e) {
+        // var node = $(event.target).closest("li");
+        // var node = result.jstree.get_selected(true)[0];
+        var node = _mainApp.contentTree.tree.jstree.get_selected(true)[0];
+
+        if (node.type === FOLDER_TYPE) {  // folder
+            _mainApp.folderTree.tree.jstree.deselect_all();
+            _mainApp.folderTree.tree.jstree.select_node(node);
+
+        } else if (node.type === LINK_TYPE) {  // link
+            window.open(node.data.url, "_blank");
+
+        } else {
+            // do nothing
+        }
+    });
 }
 
 /**
