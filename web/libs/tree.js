@@ -216,13 +216,6 @@ Tree.prototype.updateNode = function(node) {
     this.jstree.rename_node(jstreeNode, node.name);
 
     var parentJstreeNode = this.getJstreeNode(node.parentId);
-    // this.jstree.redraw(true);
-    // XXX
-    // if (parentJstreeNode != "#") {
-    //     this.jstree.refresh_node(parentJstreeNode);
-    // } else {
-    //     this.jstree.refresh();
-    // }
 }
 
 /**
@@ -369,12 +362,6 @@ FolderTree.prototype.receiveEvent = function(event) {
 function ContentTree(domId, treeManipulation) {
 	
     this.tree = this.initTree(domId, treeManipulation);
-
-    this.nullSpaceContextMenu = new NullSpaceContextMenu(this.tree, ["addFolder", "addLink"]);
-// XXX
-    // null space context menu
-    // this.nullSpaceContextMenuDom = createNullSpaceContextMenu(this.tree, ["addFolder", "addLink"]);
-    // this.initListeners();
 }
 
 /**
@@ -403,21 +390,6 @@ ContentTree.prototype.initTree = function(domId, treeManipulation) {
 
     return new Tree(domId, config, treeManipulation);
 }
-
-// XXX
-// /**
-//  * [initListeners description]
-//  * @return {[type]}
-//  */
-// ContentTree.prototype.initListeners = function() {
-//     var _folderTree = this;
-
-//     $("#" + this.tree.domId).parent().mousedown(function(e) { 
-//         if(e.button == 2) { 
-//             _folderTree.nullSpaceContextMenuDom.contextmenu("open", $("#" + _folderTree.tree.domId));
-//         } 
-//     });
-// }
 
 /**
  * [receiveEvent description]
@@ -461,71 +433,3 @@ ContentTree.prototype.setFolder = function(folder) {
 		this.tree.createNode(folder.nodes[i]);
 	}
 }
-
-//
-const NULL_SPACE_MENU_ITEMS = {
-    addFolder: {
-        title: "Add Folder",
-        cmd: "addFolder",
-        uiIcon: "ui-icon-folder-open",
-    },
-    addLink: {
-        title: "Add Link",
-        cmd: "addLink",
-        uiIcon: "ui-icon-link",            
-    },
-};
-
-/**
- * Constructor.
- * @param {[type]} tree  
- * @param {[type]} items options array: ["addFolder", "addLink"]
- */
-function NullSpaceContextMenu(tree, items) {
-    this.tree = tree;
-    this.initContextMenu(tree, items);
-}
-
-/**
- * [initContextMenu description]
- * @param  {[type]} tree  [description]
- * @param  {[type]} items [description]
- */
-NullSpaceContextMenu.prototype.initContextMenu = function(tree, items) {
-    var selectedMenu = [];
-    for (var i = 0; i < items.length; i++) {
-        var key = items[i];
-        if (NULL_SPACE_MENU_ITEMS[key]) {
-            selectedMenu[selectedMenu.length] = NULL_SPACE_MENU_ITEMS[key];
-        }
-    }
-
-    // create context menu
-    $("#" + tree.domId).parent().contextmenu({
-        delegate: "#" + tree.domId,
-        autoTrigger: true,
-        preventContextMenuForPopup: true,
-        menu: selectedMenu,
-
-        select: function(event, ui) {
-            if (ui.cmd == NULL_SPACE_MENU_ITEMS.addFolder.cmd) {
-                treeManipulation.addFolder(tree.rootFolder);
-
-            } else if (ui.cmd == NULL_SPACE_MENU_ITEMS.addLink.cmd) {
-                treeManipulation.addLink(tree.rootFolder);
-
-            } else {
-                // do nothing
-            }
-            alert("select " + ui.cmd + " on " + ui.target.text());
-        },
-
-        beforeOpen: function(event, ui) {
-            return ui.target[0].id === tree.domId;
-        }
-    });
-}
-
-// NullSpaceContextMenu.prototype.showByJQeryMouseEvent = function(event) {
-//     $("#" + this.tree.domId).parent();
-// }
