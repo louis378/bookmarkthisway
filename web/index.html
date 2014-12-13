@@ -151,7 +151,25 @@
         //     //         console.log(result);
         //     // });
 
-        
+        $("#folderTree").contextmenu({
+            delegate: "#folderTree",
+            preventContextMenuForPopup: true,
+            menu: [
+                {title: "Copy", cmd: "copy", uiIcon: "ui-icon-copy"},
+                {title: "----"},
+                {title: "More", children: [
+                    {title: "Sub 1", cmd: "sub1"},
+                    {title: "Sub 2", cmd: "sub1"}
+                    ]}
+                ],
+            select: function(event, ui) {
+                alert("select " + ui.cmd + " on " + ui.target.text());
+            },
+             beforeOpen: function(event, ui) {
+                
+                return ui.target[0].tagName.toLowerCase() === "div" && ui.target[0].id === "folderTree";
+             }
+        });
     }  
 
 </script>
@@ -175,6 +193,7 @@
 
 #contentTree {
     background-color: #00ff00;
+    height: 1000px;
 }
 
 </style>
