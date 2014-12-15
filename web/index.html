@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<title>Bookmark This Way</title>
 <script type="text/javascript" src="./libs/tree-data.js"></script>
 <script type="text/javascript" src="./libs/google-ctrl-strategy.js"></script>
 <script type="text/javascript" src="./libs/tree-controller.js"></script>
@@ -186,21 +187,35 @@
 
 <style>
 
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    padding: 10px;
+}
+
+#header {
+    height: 50px;
+}
+
 #treeContainer {
-    height: 150px;
-    margin: 5px;
+    position: absolute;
+    top: 55px; /* Header Height */
+    bottom: 20px; /* Footer Height */
+    left: 5px;
+    right: 5px;
+    
+
 }
 
 #folderTree {
     background-color: #ff0000;
-    /*height: 1000px;*/
-    /*width: 500px;*/
-    overflow-y: scroll; 
 }
 
 #contentTree {
     background-color: #00ff00;
-    /*height: 1000px;*/
 }
 
 </style>
@@ -209,25 +224,21 @@
 
 <body>
 <!-- header -->
-<header>
-    <h1>Bookmark This Way</h1>
-</header>    
+<header id="header">
+    <div>
+        <button title="google auth" id="loginBtn" class="btn btn-danger" disabled>
+            <i class="fa fa-google-plus-square fa-2x" style="vertical-align:middle"></i> Login
+        </button>
+    </div>
 
-<div>
-    <button title="google auth" id="loginBtn" class="btn btn-danger" disabled>
-        <i class="fa fa-google-plus-square fa-2x" style="vertical-align:middle"></i> Login
-    </button>
-</div>
-
-<div class="row" style="margin: 20px 0px;"> 
-    <section class="col-xs-2"> 
+    <div> 
         <select id="pageSelect" class="form-control">
             <option value="">choose root folder...</option>
         </select>
-    </section>
-</div>
+    </div>
+</header> 
 
-<div id="treeContainer" class="row">
+<div id="treeContainer">
     <div id="folderTree" class="ui-layout-west"></div>
 
     <div id="contentTree" class="ui-layout-center"></div>
