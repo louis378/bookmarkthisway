@@ -179,6 +179,9 @@ Tree.prototype.initKeyDownListener = function() {
 Tree.prototype.setRoot = function(rootFolder) {
     this.clearAll();
     this.rootFolder = rootFolder;
+
+    // dom event
+    $("#" + this.domId).trigger("setRoot");
 }
 
 /**
@@ -187,6 +190,9 @@ Tree.prototype.setRoot = function(rootFolder) {
  */
 Tree.prototype.clearAll = function() {
     this.jstree.refresh();
+
+    // dom event
+    $("#" + this.domId).trigger("clearAll");
 }
 
 /**

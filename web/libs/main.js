@@ -111,3 +111,24 @@ MainApp.prototype.receiveEvent = function(event) {
 	this.folderTree.receiveEvent(event);
 	this.contentTree.receiveEvent(event);
 }
+
+/**
+ * [addFolderInFolderTreeRoot description]
+ */
+MainApp.prototype.addFolderInFolderTreeRoot = function() {
+    this.treeManipulation.addFolder(this.folderTree.tree.rootFolder);
+}
+
+/**
+ * [addFolderInContentTreeRoot description]
+ */
+MainApp.prototype.addFolderInContentTreeRoot = function() {
+    this.treeManipulation.addFolder(this.contentTree.tree.rootFolder);
+}
+
+/**
+ * [addLinkInContentTreeRoot description]
+ */
+MainApp.prototype.addLinkInContentTreeRoot = function() {
+    this.treeManipulation.addLink(this.contentTree.tree.rootFolder);
+}
