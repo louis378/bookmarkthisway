@@ -44,6 +44,18 @@ Tree.wrapConfig = function(config, treeManipulation) {
             var treeNode = jstreeNode.data;
 
             var items = {
+                "openLink": {
+                    "label": "Open",
+                    "icon": "glyphicon glyphicon-share-alt",
+                    "action": function() {
+                        if (treeNode.type == LINK_TYPE) {
+                            window.open(treeNode.url, "_blank");
+                        } else {
+                            // XXX
+                        }
+                    } 
+                },
+
                 "editNode": {
                     "label": "Edit",
                     "icon": "glyphicon  glyphicon-pencil",
@@ -69,6 +81,7 @@ Tree.wrapConfig = function(config, treeManipulation) {
                 },                
 
                 "addFolder": {
+                    "separator_before": true,
                     "label": "Add Folder in\"" + treeNode.name + "\"",
                     "icon": "glyphicon  glyphicon-folder-open",
                     "action": function() {
@@ -77,7 +90,6 @@ Tree.wrapConfig = function(config, treeManipulation) {
                 },
 
                 "addLink": {
-                    "separator_before": true,
                     "label": "Add Link in\"" + treeNode.name + "\"",
                     "icon": "glyphicon  glyphicon-link",
                     "action": function() {
@@ -89,6 +101,8 @@ Tree.wrapConfig = function(config, treeManipulation) {
             if (treeNode.type == LINK_TYPE) {
                 delete items.addFolder;
                 delete items.addLink;
+            } else {
+                delete items.openLink;
             }
 
             return items;

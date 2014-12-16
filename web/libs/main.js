@@ -51,8 +51,6 @@ MainApp.prototype.initListeners = function() {
 
     // double click in content tree
     this.contentTree.tree.$tree.on("dblclick.jstree", function (e) {
-        // var node = $(event.target).closest("li");
-        // var node = result.jstree.get_selected(true)[0];
         var node = _mainApp.contentTree.tree.jstree.get_selected(true)[0];
 
         if (node.type === FOLDER_TYPE) {  // folder
