@@ -64,18 +64,12 @@
 
             resizerCursor: "resizer-n",
             spacing_open: 0,
-            // spacing_closed: 0,
 
             // west
             west__size: "50%",
             west__minSize: "20%",
             west__maxSize: "80%",
-            // west__spacing_closed: 8,
             west__spacing_open: 15,
-            // west__togglerLength_closed: 105,
-            // west__togglerLength_open: 105,
-            // west__togglerContent_closed: toggleButtons,
-            // west__togglerContent_open: toggleButtons,
             
         });
     });
@@ -87,13 +81,6 @@
 
         g_GoogleCtrlStrategy = new GoogleCtrlStrategy();
         g_TreeController.setCtrlStrategy(g_GoogleCtrlStrategy);
-
-        // XXX-debug
-        // g_TreeController.addTreeDataListener({
-        //     "receiveEvent": function(event) {
-        //         console.log(event);
-        //     },
-        // });
 
         $("#loginBtn").attr('disabled', false).click(function() {
             googleAuth();
@@ -155,57 +142,6 @@
             }
         });
         $("#pageSelect").show();
-
-        // g_TreeController.getRootSubfolders(function(node) {
-        //         // console.log(node);
-        //     });
-
-        //     g_TreeController.setRootFolder({id: "0B4X25K51rXhmRThJd1hLbU5WZGs", parentId: "0AIX25K51rXhmUk9PVA", name: "Bookmark", type: "folder"}, function(result) {
-
-        //     });
-
-        //     setTimeout(function() {
-        //         g_TreeController.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
-        //             console.log("loadChildren: " + result);
-        //         });
-        //         g_TreeController.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
-        //             console.log("loadChildren: " + result);
-        //         });
-
-        //         setTimeout(function() {
-        //             //  g_TreeController.deleteNode({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
-        //             //     function(result) {
-        //             //         console.log(result);
-        //             // });
-
-        //             // g_TreeController.deleteNode({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
-        //             //     function(result) {
-        //             //         console.log(result);
-        //             // });        
-                             
-        //             // g_TreeController.updateFolder({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤", type: FOLDER_TYPE},
-        //             //     function(result) {
-        //             //         console.log(result);
-                    
-        //             // g_TreeController.updateLink({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "連D落選囉！" + new Date(), description: "吃西堤囉" + new Date(), type: LINK_TYPE, url: "https://developers.google.com/drive/v2/reference/files/update"},
-        //             //     function(result) {
-        //             //         console.log(result);
-        //             // });
-
-        //         }, 5000);
-        //     }, 3000);
-            
-        //     // g_TreeController.addFolder({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ ggg" + new Date()},
-        //     //     function(result) {
-        //     //         console.log(result);
-        //     // });
-             
-        //     // g_TreeController.addLink({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "aaaaaaaaaaaaaaa" + new Date(), description: "想睡覺", url: "www.google.com.tw"},
-        //     //     function(result) {
-        //     //         console.log(result);
-        //     // });
-
-
     }  
 
 </script>
@@ -214,6 +150,7 @@
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
 
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/redmond/jquery-ui.css">
+<link rel="stylesheet" href="./libs/layout-default-1_4.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 
@@ -240,24 +177,22 @@ body {
     bottom: 20px; /* Footer Height */
     left: 5px;
     right: 5px;
-    
-
 }
 
 #folderTreeOuter {
-    padding: 5px 0 5px 5px;
+    
 }
 
 #folderTree {
-    background-color: #ff0000;
+    margin: 5px;
 }
 
 #contentTreeOuter {
-    padding: 5px 5px 5px 0;
+    
 }
 
 #contentTree {
-    background-color: #00ff00;
+    margin: 5px;
 }
 
 </style>
