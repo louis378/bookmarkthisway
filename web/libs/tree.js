@@ -277,7 +277,7 @@ Tree.prototype.toJstreeNode = function(jstreeNode, node) {
 
         // li
         jstreeNode.li_attr = {
-
+            "title": node.description,
         };
 
         // hyperlink
