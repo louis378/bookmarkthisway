@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<title>Bookmark This Way</title>
 <script type="text/javascript" src="./libs/tree-data.js"></script>
 <script type="text/javascript" src="./libs/google-ctrl-strategy.js"></script>
 <script type="text/javascript" src="./libs/tree-controller.js"></script>
@@ -11,6 +12,9 @@
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+
+
+<script type="text/javascript" src="./libs/jquery.layout-1_4.js"></script>
 <script type="text/javascript" src="./libs/jquery-ui-utils.js"></script>
 <script type="text/javascript" src="./libs/tree-manipulation.js"></script>
 
@@ -24,12 +28,13 @@
     const SCOPES = "https://www.googleapis.com/auth/drive";
     var g_TreeController;
     var g_GoogleCtrlStrategy;
+    var g_MainApp;
     var g_CurRootSubfolders = {};
 
     // js init
     $(function() {
         g_TreeController = new TreeController();
-        var mainApp = new MainApp(g_TreeController, "folderTree", "contentTree");
+        g_MainApp = new MainApp(g_TreeController, "folderTree", "contentTree");
 
         // root folder select
         $("#pageSelect").hide();
@@ -43,6 +48,30 @@
 
         $("#folderTree").tooltip();
         $("#contentTree").tooltip();
+
+        // add buttons
+        $("#folderTreeAddFolderBtn").hide();
+        $("#contentTreeAddFolderBtn").hide();
+        $("#contentTreeAddLinkBtn").hide();
+
+        // split pane
+        myLayout = $("#treeContainer").layout({
+            resizeWhileDragging: true,
+            sizable: false,
+            animatePaneSizing: true,
+            closable: false,
+            fxSpeed: "slow",
+
+            resizerCursor: "resizer-n",
+            spacing_open: 0,
+
+            // west
+            west__size: "50%",
+            west__minSize: "20%",
+            west__maxSize: "80%",
+            west__spacing_open: 15,
+            
+        });
     });
 
     /**
@@ -52,13 +81,6 @@
 
         g_GoogleCtrlStrategy = new GoogleCtrlStrategy();
         g_TreeController.setCtrlStrategy(g_GoogleCtrlStrategy);
-
-        // XXX-debug
-        // g_TreeController.addTreeDataListener({
-        //     "receiveEvent": function(event) {
-        //         console.log(event);
-        //     },
-        // });
 
         $("#loginBtn").attr('disabled', false).click(function() {
             googleAuth();
@@ -71,7 +93,6 @@
     function googleAuth() {
         g_GoogleCtrlStrategy.auth(DRIVE_CLIENT_ID, SCOPES, {
             "onAuthSuccess": function() {
-                console.log("success");
                 googleAuthSuccess();
             },
             "onAuthFail": function() {
@@ -88,6 +109,30 @@
         // login button invisible
         $("#loginBtn").hide();
 
+        // add buttons
+        $("#folderTreeAddFolderBtn").click(function() {
+            g_MainApp.addFolderInFolderTreeRoot();
+        });
+        $("#folderTree").on("setRoot", function(e) {
+            $("#folderTreeAddFolderBtn").show();
+        }).on("clearAll", function(e) {
+            $("#folderTreeAddFolderBtn").hide();
+        });
+
+        $("#contentTreeAddFolderBtn").click(function() {
+            g_MainApp.addFolderInContentTreeRoot();
+        });
+        $("#contentTreeAddLinkBtn").click(function() {
+            g_MainApp.addLinkInContentTreeRoot();
+        });
+        $("#contentTree").on("setRoot", function(e) {
+            $("#contentTreeAddFolderBtn").show();
+            $("#contentTreeAddLinkBtn").show();
+        }).on("clearAll", function(e) {
+            $("#contentTreeAddFolderBtn").hide();
+            $("#contentTreeAddLinkBtn").hide();
+        });
+
         // Access token has been successfully retrieved, requests can be sent to the API.
         g_CurRootSubfolders = {};
         g_TreeController.getRootSubfolders(function(node, error) {
@@ -97,55 +142,6 @@
             }
         });
         $("#pageSelect").show();
-
-        // g_TreeController.getRootSubfolders(function(node) {
-        //         // console.log(node);
-        //     });
-
-        //     g_TreeController.setRootFolder({id: "0B4X25K51rXhmRThJd1hLbU5WZGs", parentId: "0AIX25K51rXhmUk9PVA", name: "Bookmark", type: "folder"}, function(result) {
-
-        //     });
-
-        //     setTimeout(function() {
-        //         g_TreeController.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
-        //             console.log("loadChildren: " + result);
-        //         });
-        //         g_TreeController.loadChildren("0B4X25K51rXhmVm9PLUZmWkMwbXM", function(result) {
-        //             console.log("loadChildren: " + result);
-        //         });
-
-        //         setTimeout(function() {
-        //             //  g_TreeController.deleteNode({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
-        //             //     function(result) {
-        //             //         console.log(result);
-        //             // });
-
-        //             // g_TreeController.deleteNode({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM"},
-        //             //     function(result) {
-        //             //         console.log(result);
-        //             // });        
-                             
-        //             // g_TreeController.updateFolder({id: "0B4X25K51rXhmQzA4bFNPTnp3dW8", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ 請西堤", type: FOLDER_TYPE},
-        //             //     function(result) {
-        //             //         console.log(result);
-                    
-        //             // g_TreeController.updateLink({id: "0B4X25K51rXhmaTg4WXctdjM2cjQ", parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "連D落選囉！" + new Date(), description: "吃西堤囉" + new Date(), type: LINK_TYPE, url: "https://developers.google.com/drive/v2/reference/files/update"},
-        //             //     function(result) {
-        //             //         console.log(result);
-        //             // });
-
-        //         }, 5000);
-        //     }, 3000);
-            
-        //     // g_TreeController.addFolder({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "PZ ggg" + new Date()},
-        //     //     function(result) {
-        //     //         console.log(result);
-        //     // });
-             
-        //     // g_TreeController.addLink({parentId: "0B4X25K51rXhmVm9PLUZmWkMwbXM", name: "aaaaaaaaaaaaaaa" + new Date(), description: "想睡覺", url: "www.google.com.tw"},
-        //     //     function(result) {
-        //     //         console.log(result);
-        //     // });
     }  
 
 </script>
@@ -154,36 +150,96 @@
 <link rel="stylesheet" type="text/css" href="./libs/jtree/themes/default/style.min.css" />
 
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/redmond/jquery-ui.css">
+<link rel="stylesheet" href="./libs/layout-default-1_4.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 
 <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+
+<style>
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    padding: 10px;
+}
+
+#header {
+    height: 50px;
+}
+
+#treeContainer {
+    position: absolute;
+    top: 65px; /* Header Height */
+    bottom: 20px; /* Footer Height */
+    left: 5px;
+    right: 5px;
+}
+
+#folderTreeOuter {
+    
+}
+
+#folderTree {
+    margin: 5px;
+}
+
+#contentTreeOuter {
+    
+}
+
+#contentTree {
+    margin: 5px;
+}
+
+</style>
+
 </head>
 
 <body>
 <!-- header -->
-<header>
-    <h1>Bookmark This Way</h1>
-</header>    
+<header id="header">
+    <div>
+        <button title="google auth" id="loginBtn" class="btn btn-danger" disabled>
+            <i class="fa fa-google-plus-square fa-2x" style="vertical-align:middle"></i> Login
+        </button>
+    </div>
 
-<div>
-    <button title="google auth" id="loginBtn" class="btn btn-danger" disabled>
-        <i class="fa fa-google-plus-square fa-2x" style="vertical-align:middle"></i> Login
-    </button>
-</div>
-
-<div class="row" style="margin: 20px 0px;"> 
-    <section class="col-xs-2"> 
+    <div> 
         <select id="pageSelect" class="form-control">
             <option value="">choose root folder...</option>
         </select>
-    </section>
-</div>
+    </div>
+</header> 
 
-<div class="row">
-    <div id="folderTree" class="col-md-4"></div>
+<div id="treeContainer">
+    <!-- folder tree -->
+    <div id="folderTreeOuter" class="ui-layout-west">
+        <button id="folderTreeAddFolderBtn">
+            <small><span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span></small>
+            <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
+            <small>Add Folder</small>
+        </button>
+        <div id="folderTree"></div>
+    </div>
 
-    <div id="contentTree" class="col-md-4"></div>
+    <!-- content tree -->
+    <div id="contentTreeOuter" class="ui-layout-center">
+        <button id="contentTreeAddFolderBtn">
+            <small><span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span></small>
+            <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
+            <small>Add Folder</small>
+        </button>
+        <button id="contentTreeAddLinkBtn">
+            <small><span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span></small>
+            <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
+            <small>Add Link</small>
+        </button>
+        <div id="contentTree"></div>
+    </div>
 </div>
 
 </body>

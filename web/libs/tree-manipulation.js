@@ -20,9 +20,8 @@ TreeManipulation.prototype.getRootSubfolders = function(callback) {
 /**
  * [setRootFolder description]
  * @param {[type]}   rootFolder [description]
- * @param {Function} callback   [description]
  */
-TreeManipulation.prototype.setRootFolder = function(rootFolder, callback) {
+TreeManipulation.prototype.setRootFolder = function(rootFolder) {
 	this.treeController.setRootFolder(rootFolder, function(result) {
 		// result.isSuccess
 	});
@@ -39,18 +38,18 @@ TreeManipulation.prototype.loadChildren = function(folderId) {
 
 /**
  * [addFolder description]
- * @param {[type]}   parentId   [description]
+ * @param {[type]}   parentNode   [description]
  */
-TreeManipulation.prototype.addFolder = function(parentId) {
+TreeManipulation.prototype.addFolder = function(parentNode) {
 	var _treeMani = this;
 
 	JqUi.popupFolderData(
         {
-            "window": {"title": "Add Folder", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
+            "window": {"title": "Add Folder in &#34;" + parentNode.name + "&#34;", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
         },
         function(input) {
         	var folder = {
-        		"parentId": parentId,
+        		"parentId": parentNode.id,
         		"name": input.name,
         	};
             
@@ -66,18 +65,18 @@ TreeManipulation.prototype.addFolder = function(parentId) {
 
 /**
  * [addLink description]
- * @param {[type]}   link     [description]
+ * @param {[type]}   parentNode     [description]
  */
-TreeManipulation.prototype.addLink = function(parentId) {
+TreeManipulation.prototype.addLink = function(parentNode) {
 	var _treeMani = this;
 
 	JqUi.popupBookmarkData(
         {
-            "window": {"title": "Add Link", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
+            "window": {"title": "Add Link in &#34;" + parentNode.name + "&#34;", "commitBtnLabel": "Add", "cancelBtnLabel": "Cancel"}
         },
         function(input) {
         	var link = {
-        		"parentId": parentId,
+        		"parentId": parentNode.id,
         		"name": input.name,
         		"url": input.url,
         		"description": input.description
@@ -146,10 +145,8 @@ TreeManipulation.prototype.updateFolder = function(folder) {
 /**
  * [updateLink description]
  * @param  {[type]}   link     [description]
- * @param  {Function} callback [description]
- * @return {[type]}            [description]
  */
-TreeManipulation.prototype.updateLink = function(link, callback) {
+TreeManipulation.prototype.updateLink = function(link) {
 	var _treeMani = this;
 
 	JqUi.popupBookmarkData(

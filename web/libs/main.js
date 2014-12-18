@@ -39,12 +39,30 @@ MainApp.prototype.initListeners = function() {
 
     // delete event in folder tree
     this.folderTree.tree.$tree.on("delete_node.jstree", function (e, data) {
-        _mainApp.contentTree.clearAll();
+        if (data.node.id == _mainApp.contentTree.tree.rootFolder.id) {
+            _mainApp.contentTree.clearAll();
+        }
     });
 
     // XXX trick-rename_node.jstree in content tree
     this.contentTree.tree.$tree.on("rename_node.jstree", function (e, data) {
         _mainApp.reloadContentTree(_mainApp.contentTree.tree.rootFolder);
+    });
+
+    // double click in content tree
+    this.contentTree.tree.$tree.on("dblclick.jstree", function (e) {
+        var node = _mainApp.contentTree.tree.jstree.get_selected(true)[0];
+
+        if (node.type === FOLDER_TYPE) {  // folder
+            _mainApp.folderTree.tree.jstree.deselect_all();
+            _mainApp.folderTree.tree.jstree.select_node(node);
+
+        } else if (node.type === LINK_TYPE) {  // link
+            window.open(node.data.url, "_blank");
+
+        } else {
+            // do nothing
+        }
     });
 }
 
@@ -90,4 +108,25 @@ MainApp.prototype.createContentTree = function(domId) {
 MainApp.prototype.receiveEvent = function(event) {
 	this.folderTree.receiveEvent(event);
 	this.contentTree.receiveEvent(event);
+}
+
+/**
+ * [addFolderInFolderTreeRoot description]
+ */
+MainApp.prototype.addFolderInFolderTreeRoot = function() {
+    this.treeManipulation.addFolder(this.folderTree.tree.rootFolder);
+}
+
+/**
+ * [addFolderInContentTreeRoot description]
+ */
+MainApp.prototype.addFolderInContentTreeRoot = function() {
+    this.treeManipulation.addFolder(this.contentTree.tree.rootFolder);
+}
+
+/**
+ * [addLinkInContentTreeRoot description]
+ */
+MainApp.prototype.addLinkInContentTreeRoot = function() {
+    this.treeManipulation.addLink(this.contentTree.tree.rootFolder);
 }

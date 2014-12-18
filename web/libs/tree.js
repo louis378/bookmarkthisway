@@ -44,6 +44,18 @@ Tree.wrapConfig = function(config, treeManipulation) {
             var treeNode = jstreeNode.data;
 
             var items = {
+                "openLink": {
+                    "label": "Open",
+                    "icon": "glyphicon glyphicon-share-alt",
+                    "action": function() {
+                        if (treeNode.type == LINK_TYPE) {
+                            window.open(treeNode.url, "_blank");
+                        } else {
+                            // XXX
+                        }
+                    } 
+                },
+
                 "editNode": {
                     "label": "Edit",
                     "icon": "glyphicon  glyphicon-pencil",
@@ -66,27 +78,32 @@ Tree.wrapConfig = function(config, treeManipulation) {
                     "action": function() {
                         treeManipulation.deleteNode(treeNode);
                     }    
+                },                
+
+                "addFolder": {
+                    "separator_before": true,
+                    "label": "Add Folder in\"" + treeNode.name + "\"",
+                    "icon": "glyphicon  glyphicon-folder-open",
+                    "action": function() {
+                        treeManipulation.addFolder(treeNode);
+                    }
                 },
 
                 "addLink": {
-                    "separator_before": true,
-                    "label": "Add Link",
+                    "label": "Add Link in\"" + treeNode.name + "\"",
                     "icon": "glyphicon  glyphicon-link",
                     "action": function() {
-                    	var parentId = Tree.getCreateParentId(treeNode);
-                        treeManipulation.addLink(parentId);
-                    }
-                },
-
-                "addFolder": {
-                    "label": "Add Folder",
-                    "icon": "glyphicon  glyphicon-folder-open",
-                    "action": function() {
-                    	var parentId = Tree.getCreateParentId(treeNode);
-                        treeManipulation.addFolder(parentId);
+                        treeManipulation.addLink(treeNode);
                     }
                 },
             };
+
+            if (treeNode.type == LINK_TYPE) {
+                delete items.addFolder;
+                delete items.addLink;
+            } else {
+                delete items.openLink;
+            }
 
             return items;
         }
@@ -176,6 +193,9 @@ Tree.prototype.initKeyDownListener = function() {
 Tree.prototype.setRoot = function(rootFolder) {
     this.clearAll();
     this.rootFolder = rootFolder;
+
+    // dom event
+    $("#" + this.domId).trigger("setRoot");
 }
 
 /**
@@ -184,6 +204,9 @@ Tree.prototype.setRoot = function(rootFolder) {
  */
 Tree.prototype.clearAll = function() {
     this.jstree.refresh();
+
+    // dom event
+    $("#" + this.domId).trigger("clearAll");
 }
 
 /**
@@ -218,13 +241,6 @@ Tree.prototype.updateNode = function(node) {
     this.jstree.rename_node(jstreeNode, node.name);
 
     var parentJstreeNode = this.getJstreeNode(node.parentId);
-    // this.jstree.redraw(true);
-    // XXX
-    // if (parentJstreeNode != "#") {
-    //     this.jstree.refresh_node(parentJstreeNode);
-    // } else {
-    //     this.jstree.refresh();
-    // }
 }
 
 /**
@@ -261,7 +277,7 @@ Tree.prototype.toJstreeNode = function(jstreeNode, node) {
 
         // li
         jstreeNode.li_attr = {
-
+            "title": node.description,
         };
 
         // hyperlink
@@ -371,7 +387,6 @@ FolderTree.prototype.receiveEvent = function(event) {
 function ContentTree(domId, treeManipulation) {
 	
     this.tree = this.initTree(domId, treeManipulation);
-
 }
 
 /**
